@@ -20,7 +20,7 @@ LiquidCrystal lcd(22, 23, 27, 26, 25, 24);
 #define LCD_WIDTH					16
 
 //pedal state variables
-int sel_effect = 0;
+int sel_effect = -1;
 int effects_len = -1;
 char **effect_names = NULL;	 	//array of strings, names of effects
 byte **effect_colors = NULL;	//array of 3-tuple bytes for colors
@@ -125,7 +125,7 @@ void color_lcd(byte* colors){
 
 void loop() {
 	// put your main code here, to run repeatedly:
-	delay(150);
+	delay(50);
 	//initialize if needed
 	if(effects_len < 0){
 		ble_write("LIST");
@@ -168,14 +168,25 @@ void loop() {
 			}
 		}
 		effects_len = len;
+		ble_write("OK");
 	//scroll through possible screens
 	}else{
-		//color the lcd
-		color_lcd(effect_colors[sel_effect]);
-		//display name
-		lcd.clear();
-		lcd.setCursor(0,0);
-		lcd.print(effect_names[sel_effect]);
-		delay(1000);
+		int new_sel = analogRead(0) / (900 / (effects_len));
+		//switch if effect changes
+		if(new_sel != sel_effect && new_sel < effects_len){
+			sel_effect = new_sel;
+			//color the lcd
+			color_lcd(effect_colors[sel_effect]);
+			//display name
+			lcd.clear();
+			lcd.setCursor(0,0);
+			//put name in center
+			int left_pad = (16 - strlen(effect_names[sel_effect])) / 2;
+			for(int i = 0; i < left_pad; i++){ lcd.print(" "); }
+			lcd.print(effect_names[sel_effect]);
+			//print button indicator
+			lcd.setCursor(0,1);
+			lcd.print("(+)  (edit)  (-)");
+		}
 	}
 }

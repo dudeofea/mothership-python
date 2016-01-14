@@ -1,6 +1,7 @@
 # Modular Synth Program controller by wireless BLE Mothership Pedal
 # modified from adafruit ble library github repo
 import Adafruit_BluefruitLE
+import time
 from Adafruit_BluefruitLE.services import UART
 from engine import AudioEngine
 
@@ -42,11 +43,10 @@ def main():
 		UART.discover(device)	# time out after 60 seconds (specify timeout_sec parameter to override).
 		#create instance of discovered device
 		uart = UART(device)
-		# Write a string to the TX characteristic.
-		#uart.write('Hello world!\r\n')
 		#read values from UART
 		while True:
-			#TODO: add sleep after to receiving to avoid getting it twice (or maybe it's on the other end or from a previous connection)
+			#for some reason, the first message is received twice
+			received = uart.read(timeout_sec=60)
 			received = uart.read(timeout_sec=60)
 			if received is not None:
 				# Received data, print it out.
@@ -62,6 +62,8 @@ def main():
 						c = e.color_raw
 						c.append('\n')
 						uart.write(c)
+				if received.startswith('U'):	#effect argument update
+					print received
 			else:
 				# Timeout waiting for data, None is returned.
 				print('Received no data!')
