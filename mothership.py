@@ -9,7 +9,10 @@ ble = Adafruit_BluefruitLE.get_provider()
 
 # setup audio engine to run effects
 engine = AudioEngine('effects.py')
-print engine.effect_names()
+effs = engine.get_effects()
+for e in effs:
+	print e.__name__
+	print list(e.color_raw)
 
 # ble listen thread
 def main():
@@ -43,13 +46,22 @@ def main():
 		#uart.write('Hello world!\r\n')
 		#read values from UART
 		while True:
+			#TODO: add sleep after to receiving to avoid getting it twice (or maybe it's on the other end or from a previous connection)
 			received = uart.read(timeout_sec=60)
 			if received is not None:
 				# Received data, print it out.
 				print('Received: {0}'.format(received))
 				if received.startswith('LIST'):	#list effect names
-					for e in engine.effect_names():
-						uart.write(e+',')
+					effs = engine.get_effects()
+					#pad first packet to 20 bytes to ensure it's separate
+					p1 = [len(effs)] + [' '] * 18 + ['\n']
+					uart.write(p1)		#send length first
+					for e in effs:
+						uart.write(e.__name__+'\n')
+					for e in effs:
+						c = e.color_raw
+						c.append('\n')
+						uart.write(c)
 			else:
 				# Timeout waiting for data, None is returned.
 				print('Received no data!')
