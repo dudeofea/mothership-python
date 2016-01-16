@@ -34,7 +34,7 @@ void error(const __FlashStringHelper*err) {
 	Serial.println(err);
 	while (1);
 }
-
+// copied from adafruit, inits the BLE module
 void setup_ble(){
 	while (!Serial);  // required for Flora & Micro
 	delay(500);
@@ -85,6 +85,9 @@ void setup_ble(){
 		ble.sendCommandCheckOK("AT+HWModeLED=" MODE_LED_BEHAVIOUR);
 		Serial.println(F("******************************"));
 	}
+
+	//switch to data mode
+	ble.setMode(BLUEFRUIT_MODE_DATA);
 }
 
 void setup() {
@@ -101,35 +104,75 @@ void setup() {
 	//setup lcd screen
 	lcd.begin(LCD_WIDTH, 2);
 }
-
+//write a string through BLE
 void ble_write(String s){
-	ble.print("AT+BLEUARTTX=");
 	ble.println(s);
-	// check response status
-	if (! ble.waitForOK() ) {
-		Serial.println(F("Failed to send?"));
-	}
 }
-
+//read a string through BLE
 int ble_read(){
-	ble.println("AT+BLEUARTRX");
-	ble.readline();
-	if (strcmp(ble.buffer, "OK") == 0) {
-		// no data
+	int bytes = ble.readline();
+	if(bytes <= 0){
 		return -1;
 	}
 	return 0;
 }
-
+//set the color of the lcd given a byte array
 void color_lcd(byte* colors){
 	analogWrite(2, 255 - colors[2]);		//B
 	analogWrite(3, 255 - colors[1]);		//G
 	analogWrite(4, 255 - colors[0]);		//R
 }
+//send all potentiometer values in 10 * 10 = 100 bits
+void sendPotValues(){
+	int pots[10];		//potentiometer values
+	byte val_buf[14];	//bit values to send
+	//read values
+	for(int i = 0; i < 10; i++){
+		pots[i] = analogRead(i);
+	}
+	//compress
+	int p_i = 0;
+	int b_i = 0;	//current bit index
+	int mod = 0;
+	int v_i = 0;	//val_buf index
+	for(int i = 0; i < 10; i++){
+		mod = b_i % 8;
+		v_i = (b_i-mod)/8;
+		switch(mod){
+			case 0:		//lined up with 0
+				val_buf[v_i]    = (0xFF & pots[i]);
+				val_buf[v_i+1]  = (0x03 & pots[i] << 8);
+				break;
+			case 2:		//offset of 2
+				val_buf[v_i]   &= (0x3F & pots[i]) >> 2;
+				val_buf[v_i+1]  = (0x0F & pots[i] << 6);
+				break;
+			case 4:		//offset of 4
+				val_buf[v_i]   &= (0x0F & pots[i]) >> 4;
+				val_buf[v_i+1]  = (0x3F & pots[i] << 4);
+				break;
+			case 6:		//offset of 6
+				val_buf[v_i]   &= (0x03 & pots[i]) >> 6;
+				val_buf[v_i+1]  = (0xFF & pots[i] << 2);
+				break;
+			default:
+				Serial.print("mod:");
+				Serial.println(mod, DEC);
+				break;
+		}
+		b_i += 10;
+	}
+	val_buf[13] = 0;	//add null byte
+	ble.print("U");
+	for(int i = 0; i < 13; i++){
+		ble.print(val_buf[i]);
+	}
+	ble.print("\n");
+}
 
 void loop() {
 	// put your main code here, to run repeatedly:
-	delay(50);
+	delay(10);
 	//initialize if needed
 	if(effects_len < 0){
 		ble_write("LIST");
@@ -138,7 +181,6 @@ void loop() {
 		int len = ble.buffer[0];
 		Serial.print(F("[len] ")); Serial.println(ble.buffer[0], DEC);
 		Serial.print(F("[extra] ")); Serial.println(&ble.buffer[1]);
-		ble.waitForOK();
 		//allocate space (this assumes I either reset / clean up after myself)
 		effect_names = (char**)malloc(sizeof(char*) * len);
 		effect_colors= (byte**)malloc(sizeof(byte*) * len);
@@ -149,7 +191,6 @@ void loop() {
 				Serial.print(F("[name] ")); Serial.println(ble.buffer);
 				effect_names[i] = (char*)malloc(sizeof(char) * (LCD_WIDTH + 1));
 				strncpy(effect_names[i], ble.buffer, LCD_WIDTH);
-				ble.waitForOK();
 				i++;
 			}
 		}
@@ -167,14 +208,16 @@ void loop() {
 				Serial.print(effect_colors[i][0], DEC); Serial.print(F(" "));
 				Serial.print(effect_colors[i][1], DEC); Serial.print(F(" "));
 				Serial.println(effect_colors[i][2], DEC);
-				ble.waitForOK();
 				i++;
 			}
 		}
 		effects_len = len;
 		ble_write("OK");
 	//edit effect page
-}else if(edit_page == 1){
+	}else if(edit_page == 1){
+		//send the potentiometer values
+		sendPotValues();
+		//show the screen
 		lcd.setCursor(0,1);
 		lcd.print("     (back)     ");
 		//poll buttons

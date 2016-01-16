@@ -15,6 +15,8 @@ effs = engine.get_effects()
 # 	print e.__name__
 # 	print list(e.color_raw)
 
+#TODO: add code for turning on adapter
+
 # ble listen thread
 def main():
 	# Clear any cached data because both bluez and CoreBluetooth have issues with
@@ -46,7 +48,7 @@ def main():
 		#read values from UART
 		while True:
 			#for some reason, the first message is received twice
-			received = uart.read(timeout_sec=60)
+			#received = uart.read(timeout_sec=60)
 			received = uart.read(timeout_sec=60)
 			if received is not None:
 				# Received data, print it out.
@@ -63,7 +65,7 @@ def main():
 						c.append('\n')
 						uart.write(c)
 				if received.startswith('U'):	#effect argument update
-					print received
+					print list(received)
 			else:
 				# Timeout waiting for data, None is returned.
 				print('Received no data!')
