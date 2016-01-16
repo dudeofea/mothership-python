@@ -25,9 +25,9 @@ int effects_len = -1;
 char **effect_names = NULL;	 	//array of strings, names of effects
 byte **effect_colors = NULL;	//array of 3-tuple bytes for colors
 
-//edit page vars
+//edit page varsy
 byte edit_page = 0;
-byte center_release = 0;
+byte center_release = 1;
 
 // A small helper
 void error(const __FlashStringHelper*err) {
@@ -185,6 +185,8 @@ void loop() {
 		if(center_release == 1){
 			if(val == LOW){
 				edit_page = 0;
+				center_release = 0;
+				sel_effect = -1;
 			}
 		}
 	//scroll through possible screens
@@ -208,10 +210,15 @@ void loop() {
 		}
 		//poll buttons
 		int val = digitalRead(BUTTON_CENTER);
-		if(val == LOW){
-			Serial.println("center");
-			center_release = 0;
-			edit_page = 1;
+		if(val != LOW){
+			center_release = 1;
+		}
+		if(center_release == 1){
+			if(val == LOW){
+				//Serial.println("center");
+				center_release = 0;
+				edit_page = 1;
+			}
 		}
 	}
 }

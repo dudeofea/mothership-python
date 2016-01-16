@@ -11,9 +11,9 @@ ble = Adafruit_BluefruitLE.get_provider()
 # setup audio engine to run effects
 engine = AudioEngine('effects.py')
 effs = engine.get_effects()
-for e in effs:
-	print e.__name__
-	print list(e.color_raw)
+# for e in effs:
+# 	print e.__name__
+# 	print list(e.color_raw)
 
 # ble listen thread
 def main():
