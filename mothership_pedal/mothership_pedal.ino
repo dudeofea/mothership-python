@@ -19,6 +19,11 @@ LiquidCrystal lcd(22, 23, 27, 26, 25, 24);
 #define BUTTON_RIGHT				53
 #define LCD_WIDTH					16
 
+// Mothership commands (stored in first 2 bits)
+#define CMD_UPDATE					0xC0
+#define CMD_LIST					0x80
+#define CMD_MOD_SELECT				0x40
+
 //pedal state variables
 int sel_effect = -1;
 int effects_len = -1;
@@ -103,6 +108,11 @@ void setup() {
 	setup_ble();
 	//setup lcd screen
 	lcd.begin(LCD_WIDTH, 2);
+	lcd.print("Connecting...");
+	//init color to white
+	analogWrite(2, 0);		//B
+	analogWrite(3, 0);		//G
+	analogWrite(4, 0);		//R
 }
 //write a string through BLE
 void ble_write(String s){
@@ -122,16 +132,26 @@ void color_lcd(byte* colors){
 	analogWrite(3, 255 - colors[1]);		//G
 	analogWrite(4, 255 - colors[0]);		//R
 }
+//print a char array in hex
+void print_array(char *arr, int arr_len){
+	for(int i = 0; i < arr_len; i++){
+		Serial.print("0x");
+		Serial.print(arr[i], HEX);
+		Serial.print(' ');
+	}
+	Serial.println(' ');
+}
 //send all potentiometer values in 10 * 10 = 100 bits
 void sendPotValues(){
 	int pots[10];		//potentiometer values
-	byte val_buf[14];	//bit values to send
+	char val_buf[14];	//bit values to send
 	//read values
 	for(int i = 0; i < 10; i++){
 		pots[i] = analogRead(i);
+		val_buf[i] = (0xFF & pots[i]);
 	}
 	//compress
-	int p_i = 0;
+	/*int p_i = 0;
 	int b_i = 0;	//current bit index
 	int mod = 0;
 	int v_i = 0;	//val_buf index
@@ -161,23 +181,27 @@ void sendPotValues(){
 				break;
 		}
 		b_i += 10;
-	}
+	}*/
 	val_buf[13] = 0;	//add null byte
-	ble.print("U");
-	for(int i = 0; i < 13; i++){
+	ble.print((char)CMD_UPDATE);
+	for(int i = 0; i < 1; i++){
 		ble.print(val_buf[i]);
 	}
-	ble.print("\n");
 }
 
 void loop() {
 	// put your main code here, to run repeatedly:
-	delay(10);
+	delay(20);
 	//initialize if needed
 	if(effects_len < 0){
-		ble_write("LIST");
+		char cmd_buf[2] = { CMD_LIST, 0 };
+		ble.println(cmd_buf);
 		//get length first (from hex value, max 255)
 		if(ble_read() < 0){ return; }
+		//load the data
+		lcd.clear();
+		lcd.setCursor(0,0);
+		lcd.print("Loading...");
 		int len = ble.buffer[0];
 		Serial.print(F("[len] ")); Serial.println(ble.buffer[0], DEC);
 		Serial.print(F("[extra] ")); Serial.println(&ble.buffer[1]);
@@ -212,7 +236,6 @@ void loop() {
 			}
 		}
 		effects_len = len;
-		ble_write("OK");
 	//edit effect page
 	}else if(edit_page == 1){
 		//send the potentiometer values
@@ -238,6 +261,9 @@ void loop() {
 		//switch if effect changes
 		if(new_sel != sel_effect && new_sel < effects_len){
 			sel_effect = new_sel;
+			//send info to Mothership
+			char cmd_buf[3] = { CMD_MOD_SELECT, sel_effect, 0 };
+			ble.print(cmd_buf);
 			//color the lcd
 			color_lcd(effect_colors[sel_effect]);
 			//display name
