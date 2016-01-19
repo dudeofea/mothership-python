@@ -195,7 +195,8 @@ void loop() {
 	//initialize if needed
 	if(effects_len < 0){
 		char cmd_buf[2] = { CMD_LIST, 0 };
-		ble.println(cmd_buf);
+		ble.print(cmd_buf);
+		delay(500);
 		//get length first (from hex value, max 255)
 		if(ble_read() < 0){ return; }
 		//load the data
@@ -262,7 +263,7 @@ void loop() {
 		if(new_sel != sel_effect && new_sel < effects_len){
 			sel_effect = new_sel;
 			//send info to Mothership
-			char cmd_buf[3] = { CMD_MOD_SELECT, sel_effect, 0 };
+			char cmd_buf[3] = { CMD_MOD_SELECT, sel_effect + 1, 0 };
 			ble.print(cmd_buf);
 			//color the lcd
 			color_lcd(effect_colors[sel_effect]);

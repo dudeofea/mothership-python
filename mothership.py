@@ -1,13 +1,18 @@
 # Modular Synth Program controller by wireless BLE Mothership Pedal
 # modified from adafruit ble library github repo
 import Adafruit_BluefruitLE
-import time, uuid
+import time, uuid, bitarray, signal
 from engine import AudioEngine
 
 # Define service and characteristic UUIDs used by the UART service.
 UART_SERVICE_UUID = uuid.UUID('6E400001-B5A3-F393-E0A9-E50E24DCCA9E')
 TX_CHAR_UUID      = uuid.UUID('6E400002-B5A3-F393-E0A9-E50E24DCCA9E')
 RX_CHAR_UUID      = uuid.UUID('6E400003-B5A3-F393-E0A9-E50E24DCCA9E')
+
+# Define pedal requests / commands
+CMD_UPDATE		= '11'
+CMD_LIST		= '10'
+CMD_MOD_SELECT	= '01'
 
 # Get the BLE provider for the current platform.
 ble = Adafruit_BluefruitLE.get_provider()
@@ -19,11 +24,23 @@ effs = engine.get_effects()
 # 	print e.__name__
 # 	print list(e.color_raw)
 
-# for splitting data by newlines
-data_split = ""
+# state variables for processing commands
+op_bytes = 0				#how many operand bytes are left
+current_command = None		#the current command we are processing
+current_module = None		#the currently selected module
+
+# for handing device
+stay_connected = True
+#function to catch SIGINT and quit
+def signal_handler(signal, frame):
+	global stay_connected
+	print "Signal handler called"
+	stay_connected = False
+signal.signal(signal.SIGINT, signal_handler)
 
 # ble listen thread
 def main():
+	global stay_connected
 	# Clear any cached data because both bluez and CoreBluetooth have issues with caching data and it going stale.
 	ble.clear_cached_data()
 	# Get the first available BLE network adapter and make sure it's powered on.
@@ -63,7 +80,39 @@ def main():
 
 		#function to receive data from device
 		def received(data):
-			print('Received: {0}'.format(list(data_split)))
+			global op_bytes, current_command, current_module
+			for d in data:
+				bits = bitarray.bitarray()
+				bits.frombytes(bytes(d))
+				print('Received: {0}'.format(bits.to01()))
+				if op_bytes == 0:		#new command
+					cmd = bits[:2].to01()
+					if cmd == CMD_LIST:			#list all effects (0 operands)
+						print "LIST"
+						effs = engine.get_effects()
+						#send length first
+						p1 = [len(effs)] + ['\n']
+						tx.write_value(p1)
+						#then names
+						for e in effs:
+							tx.write_value(e.__name__+'\n')
+						#then colors
+						for e in effs:
+							c = e.color_raw
+							c.append('\n')
+							tx.write_value(c)
+					elif cmd == CMD_MOD_SELECT:	#select a new module
+						op_bytes = 1	#the module itself
+						current_command = CMD_MOD_SELECT
+					elif cmd == CMD_UPDATE:
+						print "Update:"
+						op_bytes = 1
+					else:
+						print "Unknown command:", bits[:2].to01()
+				else:									#something else entirely
+					if current_command == CMD_MOD_SELECT:
+						print "Selecting module #", bits
+					op_bytes -= 1
 			# global data_split
 			# for d in data:
 			# 	if d == '\n':
@@ -86,9 +135,11 @@ def main():
 			# 		data_split += d
 		rx.start_notify(received)
 
-		time.sleep(60)		#sleep while we wait for data from device
+		while stay_connected:
+			time.sleep(1)
 	finally:
 		# Make sure device is disconnected on exit.
+		print "disconnecting..."
 		device.disconnect()
 
 ble.initialize()				# Initialize the BLE system.  MUST be called before other BLE calls!
