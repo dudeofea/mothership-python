@@ -18,6 +18,7 @@ LiquidCrystal lcd(22, 23, 27, 26, 25, 24);
 #define BUTTON_CENTER				52
 #define BUTTON_RIGHT				53
 #define LCD_WIDTH					16
+#define MAX_TRACK					15
 
 // Mothership commands (stored in first 2 bits)
 #define CMD_UPDATE					0xC0
@@ -29,6 +30,8 @@ int sel_effect = -1;
 int effects_len = -1;
 char **effect_names = NULL;	 	//array of strings, names of effects
 byte **effect_colors = NULL;	//array of 3-tuple bytes for colors
+int pots[10];					//potentiometer values
+int pot_track[10];				//indicates if potentiometer value should be updated on server-side
 
 //edit page varsy
 byte edit_page = 0;
@@ -143,55 +146,50 @@ void print_array(char *arr, int arr_len){
 }
 //send all potentiometer values in 10 * 10 = 100 bits
 void sendPotValues(){
-	int pots[10];		//potentiometer values
-	char val_buf[14];	//bit values to send
-	//read values
+	//send the pots we're tracking
+	char buf[3];
 	for(int i = 0; i < 10; i++){
-		pots[i] = analogRead(i);
-		val_buf[i] = (0xFF & pots[i]);
-	}
-	//compress
-	/*int p_i = 0;
-	int b_i = 0;	//current bit index
-	int mod = 0;
-	int v_i = 0;	//val_buf index
-	for(int i = 0; i < 10; i++){
-		mod = b_i % 8;
-		v_i = (b_i-mod)/8;
-		switch(mod){
-			case 0:		//lined up with 0
-				val_buf[v_i]    = (0xFF & pots[i]);
-				val_buf[v_i+1]  = (0x03 & pots[i] << 8);
-				break;
-			case 2:		//offset of 2
-				val_buf[v_i]   &= (0x3F & pots[i]) >> 2;
-				val_buf[v_i+1]  = (0x0F & pots[i] << 6);
-				break;
-			case 4:		//offset of 4
-				val_buf[v_i]   &= (0x0F & pots[i]) >> 4;
-				val_buf[v_i+1]  = (0x3F & pots[i] << 4);
-				break;
-			case 6:		//offset of 6
-				val_buf[v_i]   &= (0x03 & pots[i]) >> 6;
-				val_buf[v_i+1]  = (0xFF & pots[i] << 2);
-				break;
-			default:
-				Serial.print("mod:");
-				Serial.println(mod, DEC);
-				break;
+		if(pot_track[i] > 0){
+			buf[0] = CMD_UPDATE;
+			buf[1] = (pots[i]+1) & 0xFF;
+			ble.print(buf);
 		}
-		b_i += 10;
-	}*/
-	val_buf[13] = 0;	//add null byte
-	ble.print((char)CMD_UPDATE);
-	for(int i = 0; i < 1; i++){
-		ble.print(val_buf[i]);
 	}
 }
 
 void loop() {
 	// put your main code here, to run repeatedly:
 	delay(20);
+	//read potentiometer values
+	int pot_val = 0;
+	int diff = 0;
+	for(int i = 0; i < 10; i++){
+		pot_val = analogRead(i);
+		diff = abs(pot_val - pots[i]);
+		if(pot_track[i] > 0){
+			pots[i] = pot_val;
+			// Serial.print("Trackval(");
+			// Serial.print(i);
+			// Serial.print("): ");
+			// Serial.println(pot_val);
+			if(diff <= 2){
+				pot_track[i]--;
+			}else{
+				pot_track[i]++;
+				if(pot_track[i] > MAX_TRACK){
+					pot_track[i] = MAX_TRACK;
+				}
+			}
+		}
+		else if(diff > 15){
+			pots[i] = pot_val;
+			pot_track[i] = MAX_TRACK;
+			// Serial.print("New val (");
+			// Serial.print(i);
+			// Serial.print("): ");
+			// Serial.println(pot_val);
+		}
+	}
 	//initialize if needed
 	if(effects_len < 0){
 		char cmd_buf[2] = { CMD_LIST, 0 };

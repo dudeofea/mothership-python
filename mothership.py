@@ -86,6 +86,7 @@ def main():
 				bits.frombytes(bytes(d))
 				print('Received: {0}'.format(bits.to01()))
 				if op_bytes == 0:		#new command
+					current_command = None
 					cmd = bits[:2].to01()
 					if cmd == CMD_LIST:			#list all effects (0 operands)
 						print "LIST"
