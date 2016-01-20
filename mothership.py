@@ -10,9 +10,9 @@ TX_CHAR_UUID      = uuid.UUID('6E400002-B5A3-F393-E0A9-E50E24DCCA9E')
 RX_CHAR_UUID      = uuid.UUID('6E400003-B5A3-F393-E0A9-E50E24DCCA9E')
 
 # Define pedal requests / commands
-CMD_UPDATE		= '11'
-CMD_LIST		= '10'
-CMD_MOD_SELECT	= '01'
+CMD_UPDATE		= '1'
+CMD_LIST		= '001'
+CMD_MOD_SELECT	= '010'
 
 # Get the BLE provider for the current platform.
 ble = Adafruit_BluefruitLE.get_provider()
@@ -87,8 +87,8 @@ def main():
 				print('Received: {0}'.format(bits.to01()))
 				if op_bytes == 0:		#new command
 					current_command = None
-					cmd = bits[:2].to01()
-					if cmd == CMD_LIST:			#list all effects (0 operands)
+					cmd_bits = bits.to01()
+					if cmd_bits[:3] == CMD_LIST:			#list all effects (0 operands)
 						print "LIST"
 						effs = engine.get_effects()
 						#send length first
@@ -102,11 +102,11 @@ def main():
 							c = e.color_raw
 							c.append('\n')
 							tx.write_value(c)
-					elif cmd == CMD_MOD_SELECT:	#select a new module
+					elif cmd_bits[:3] == CMD_MOD_SELECT:	#select a new module
 						op_bytes = 1	#the module itself
 						current_command = CMD_MOD_SELECT
-					elif cmd == CMD_UPDATE:
-						print "Update:"
+					elif cmd_bits[:1] == CMD_UPDATE:
+						print "Update:", cmd_bits
 						op_bytes = 1
 					else:
 						print "Unknown command:", bits[:2].to01()

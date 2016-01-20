@@ -21,8 +21,8 @@ LiquidCrystal lcd(22, 23, 27, 26, 25, 24);
 #define MAX_TRACK					15
 
 // Mothership commands (stored in first 2 bits)
-#define CMD_UPDATE					0xC0
-#define CMD_LIST					0x80
+#define CMD_UPDATE					0x80
+#define CMD_LIST					0x20
 #define CMD_MOD_SELECT				0x40
 
 //pedal state variables
@@ -151,7 +151,9 @@ void sendPotValues(){
 	for(int i = 0; i < 10; i++){
 		if(pot_track[i] > 0){
 			buf[0] = CMD_UPDATE;
-			buf[1] = (pots[i]+1) & 0xFF;
+			buf[0] |= (i & 0xF) << 3;
+			buf[0] |= (pots[i] >> 7) & 0x07;
+			buf[1] = ((pots[i] & 0x7F) << 1) | 0x01;		//add one at the end to prevent a 0 byte
 			ble.print(buf);
 		}
 	}
