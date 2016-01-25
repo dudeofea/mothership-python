@@ -19,6 +19,8 @@ ble = Adafruit_BluefruitLE.get_provider()
 
 # setup audio engine to run effects
 engine = AudioEngine('effects.py')
+engine.activate()
+engine.add_patch((0,0), (-1,0))		#patch first effect to global output
 effs = engine.get_effects()
 # for e in effs:
 # 	print e.__name__

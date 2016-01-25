@@ -6,86 +6,17 @@ from engine import Effect
 # classic square wave effect
 class square_wave(Effect):
 	color = '#F15152'
-	def process(self, inp, out):
-		inp = []
-		out = []
-
-# classic square wave effect
-class sine_wave(Effect):
-	color = '#EDB183'
-	def process(self, inp, out):
-		inp = []
-		out = []
-
-# classic square wave effect
-class triangle_wave(Effect):
-	color = '#1E555C'
-	def process(self, inp, out):
-		inp = []
-		out = []
-
-# classic square wave effect
-class square_wave2(Effect):
-	color = '#F15152'
-	def process(self, inp, out):
-		inp = []
-		out = []
-
-# classic square wave effect
-class sine_wave2(Effect):
-	color = '#EDB183'
-	def process(self, inp, out):
-		inp = []
-		out = []
-
-# classic square wave effect
-class triangle_wave2(Effect):
-	color = '#1E555C'
-	def process(self, inp, out):
-		inp = []
-		out = []
-
-# classic square wave effect
-class square_wave3(Effect):
-	color = '#F15152'
-	def process(self, inp, out):
-		inp = []
-		out = []
-
-# classic square wave effect
-class sine_wave3(Effect):
-	color = '#EDB183'
-	def process(self, inp, out):
-		inp = []
-		out = []
-
-# classic square wave effect
-class triangle_wave3(Effect):
-	color = '#1E555C'
-	def process(self, inp, out):
-		inp = []
-		out = []
-
-# classic square wave effect
-class square_wave4(Effect):
-	color = '#F15152'
-	def process(self, inp, out):
-		inp = []
-		out = []
-
-# classic square wave effect
-class sine_wave4(Effect):
-	color = '#EDB183'
-	def process(self, inp, out):
-		inp = []
-		out = []
-
-# classic square wave effect
-class triangle_wave4(Effect):
-	color = '#1E555C'
-	def process(self, inp, out):
-		inp = []
-		out = []
+	freq = 440
+	def process(self):
+		value = 0.0
+		interval = self.sample_rate / self.freq
+		self.outs = (numpy.zeros((1, self.buffer_size), 'f'),)
+		for x in xrange(0, self.buffer_size - interval, interval):
+			self.outs[0][:,x:x+self.buffer_size] = value
+			if value == 0.0:
+				value = 1.0
+			else:
+				value = 0.0
 
 if __name__ == '__main__':
 	#print the info of all effects
