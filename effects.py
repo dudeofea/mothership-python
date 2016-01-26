@@ -17,7 +17,3 @@ class square_wave(Effect):
 				value = 1.0
 			else:
 				value = 0.0
-
-if __name__ == '__main__':
-	#print the info of all effects
-	print "hey"
