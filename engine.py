@@ -18,14 +18,18 @@ class AudioEngine(object):
 	patches = []
 	running = True
 	jack_client = None
+	JACK_GLOBAL = (-1, 0)	#global input / output port
 	def __init__(self, effects_path):
+		self.effects = []
+		self.patches = []
+		self.running = False
 		effects_namespace = {}
 		execfile(effects_path, effects_namespace)
 		# --- add the effects to ourselves
 		for name, obj in effects_namespace.iteritems():
 			#find all items that are classes and have Effect as subclass
 			if inspect.isclass(obj) and obj.__bases__[0].__name__ == 'Effect':
-				self.effects.append(obj)
+				self.effects.append(obj())
 		# --- compute the raw colors given the hex string
 		for i in xrange(0, len(self.effects)):
 			if self.effects[i].color:
@@ -74,6 +78,7 @@ class AudioEngine(object):
 		print "Done audio"
 	#run all effects, in any order, once and return the output buffer
 	def run(self):
+		output_buffer= numpy.zeros((1,self.buffer_size), 'f')
 		for x in xrange(0, len(self.effects)):
 			self.effects[x].process()
 		#transfer data across effects

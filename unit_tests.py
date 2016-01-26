@@ -57,11 +57,18 @@ class TestEngine(unittest.TestCase):
 	#test that all effects are listed
 	def test_list_effects(self):
 		ans = ['square_wave']
-		effs= [e.__name__ for e in self.engine.get_effects()]
+		effs= [e.__class__.__name__ for e in self.engine.get_effects()]
 		self.assertEquals(effs, ans)
-	#TODO: test that patching square_wave to output works
+	#test that patching square_wave to output works
 	def test_patch_output1(self):
-		pass
+		#set the hardware info ourselves
+		self.engine.buffer_size, self.engine.sample_rate = 20, 20
+		self.engine.effects[0].buffer_size, self.engine.effects[0].freq, self.engine.effects[0].sample_rate = self.engine.buffer_size, 4, self.engine.sample_rate
+		#run the engine once
+		self.engine.add_patch((0,0), self.engine.JACK_GLOBAL)
+		out = self.engine.run()
+		ans = numpy.array([1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0], 'f')
+		self.assertEquals(out[0], ans)
 
 if __name__ == '__main__':
 	unittest.main()
