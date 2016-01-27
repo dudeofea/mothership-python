@@ -1,6 +1,7 @@
 #	Mothership effects file, the audio engine manager takes these
 #	as an input when starting up (you can specify another file if you'd like)
 
+import numpy
 from engine import Effect
 
 # classic square wave effect

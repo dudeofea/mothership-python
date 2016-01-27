@@ -63,12 +63,12 @@ class TestEngine(unittest.TestCase):
 	def test_patch_output1(self):
 		#set the hardware info ourselves
 		self.engine.buffer_size, self.engine.sample_rate = 20, 20
-		self.engine.effects[0].buffer_size, self.engine.effects[0].freq, self.engine.effects[0].sample_rate = self.engine.buffer_size, 4, self.engine.sample_rate
+		self.engine.effects[0].buffer_size, self.engine.effects[0].freq, self.engine.effects[0].sample_rate = self.engine.buffer_size, 2, self.engine.sample_rate
 		#run the engine once
 		self.engine.add_patch((0,0), self.engine.JACK_GLOBAL)
 		out = self.engine.run()
 		ans = numpy.array([1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0], 'f')
-		self.assertEquals(out[0], ans)
+		self.assertEquals(list(out[0]), list(ans))
 
 if __name__ == '__main__':
 	unittest.main()

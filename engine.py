@@ -22,7 +22,7 @@ class AudioEngine(object):
 	def __init__(self, effects_path):
 		self.effects = []
 		self.patches = []
-		self.running = False
+		self.running = True
 		effects_namespace = {}
 		execfile(effects_path, effects_namespace)
 		# --- add the effects to ourselves
@@ -73,12 +73,12 @@ class AudioEngine(object):
 		print "Starting audio...."
 		while self.running:
 			input_buffer = numpy.zeros((1,self.buffer_size), 'f')
-			output_buffer= numpy.zeros((1,self.buffer_size), 'f')
+			output_buffer= self.run()
 			self.jack_client.process(input_buffer, output_buffer)
 		print "Done audio"
 	#run all effects, in any order, once and return the output buffer
 	def run(self):
-		output_buffer= numpy.zeros((1,self.buffer_size), 'f')
+		output_buffer = numpy.zeros((1,self.buffer_size), 'f')
 		for x in xrange(0, len(self.effects)):
 			self.effects[x].process()
 		#transfer data across effects
@@ -90,3 +90,4 @@ class AudioEngine(object):
 					output_buffer += self.effects[p[0][0]].outs[p[0][1]]
 				else:
 					pass
+		return output_buffer
