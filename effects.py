@@ -6,15 +6,16 @@ from engine import Effect
 
 # classic square wave effect
 class square_wave(Effect):
-	color = '#F15152'
-	freq = 440
+	color = '#000000'
+	freq = 2
+	up_ind = 0		#floating index for start of plateau
+	down_ind = 0	#floating index for end of plateau
 	def process(self):
-		value = 0.0
-		interval = self.sample_rate / self.freq
+		interval = float(self.sample_rate) / (self.freq*2)		#the length of the plateaus and valleys
 		self.outs = (numpy.zeros((1, self.buffer_size), 'f'),)
-		for x in xrange(0, self.buffer_size - interval, interval):
-			self.outs[0][:,x:x+self.buffer_size] = value
-			if value == 0.0:
-				value = 1.0
-			else:
-				value = 0.0
+		while self.up_ind < self.buffer_size and self.down_ind < self.buffer_size:
+			self.down_ind = self.up_ind+interval
+			self.outs[0][:,int(self.up_ind):int(min(self.down_ind, self.buffer_size))] = 1.0
+			self.up_ind = self.down_ind+interval
+		print self.up_ind, self.down_ind
+		self.up_ind -= self.buffer_size

@@ -20,7 +20,7 @@ ble = Adafruit_BluefruitLE.get_provider()
 # setup audio engine to run effects
 engine = AudioEngine('effects.py')
 engine.activate()
-engine.add_patch((0,0), (-1,0))		#patch first effect to global output
+engine.add_patch((0,0), engine.JACK_GLOBAL)		#patch first effect to global output
 effs = engine.get_effects()
 # for e in effs:
 # 	print e.__name__
@@ -33,15 +33,19 @@ current_module = None		#the currently selected module
 
 # for handing device
 stay_connected = True
-#function to catch SIGINT and quit
-def signal_handler(signal, frame):
-	global stay_connected
-	print "Signal handler called"
-	stay_connected = False
-signal.signal(signal.SIGINT, signal_handler)
 
 # ble listen thread
 def main():
+	#function to catch SIGINT and quit
+	def signal_handler(signal, frame):
+		global stay_connected
+		print "Quitting..."
+		stay_connected = False
+		engine.deactivate()
+		ble.disconnect_devices([UART_SERVICE_UUID])
+		exit(0)
+	signal.signal(signal.SIGINT, signal_handler)
+
 	global stay_connected
 	# Clear any cached data because both bluez and CoreBluetooth have issues with caching data and it going stale.
 	ble.clear_cached_data()
@@ -146,4 +150,5 @@ def main():
 		device.disconnect()
 
 ble.initialize()				# Initialize the BLE system.  MUST be called before other BLE calls!
-ble.run_mainloop_with(main)		# Start the mainloop to process BLE events
+main()
+#ble.run_mainloop_with(main)		# Start the mainloop to process BLE events

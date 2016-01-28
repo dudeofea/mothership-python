@@ -5,7 +5,7 @@
 #	Uses a file of fake effects called "test_effects.py"
 #
 import unittest
-from test_effects import *
+from effects import *
 from engine import *
 
 class TestEffects(unittest.TestCase):
@@ -50,10 +50,36 @@ class TestEffects(unittest.TestCase):
 		sq.process()
 		ans = numpy.array([1,1,0,0,0,1,1,1,0,0,0,1,1,0,0,0,1,1,1,0,0,0,1,1,0,0,0,1,1,1,0,0,0], 'f')
 		self.assertEquals(list(sq.outs[0][0]), list(ans))
+	#test that the square wave continues across buffers
+	def test_square_wave6(self):
+		buffer_size, freq, sample_rate = 8, 3, 16
+		sq = square_wave()
+		sq.buffer_size, sq.freq, sq.sample_rate = buffer_size, freq, sample_rate
+		sq.process()
+		ans = numpy.array([1,1,0,0,0,1,1,1], 'f')
+		self.assertEquals(list(sq.outs[0][0]), list(ans))
+		sq.process()
+		ans = numpy.array([0,0,1,1,1,0,0,1], 'f')
+		self.assertEquals(list(sq.outs[0][0]), list(ans))
+	#test for really big sample rates and small buffers
+	def test_square_wave7(self):
+		buffer_size, freq, sample_rate = 20, 2, 80
+		sq = square_wave()
+		sq.buffer_size, sq.freq, sq.sample_rate = buffer_size, freq, sample_rate
+		ans1 = numpy.array([1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], 'f')
+		ans2 = numpy.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 'f')
+		sq.process()
+		self.assertEquals(list(sq.outs[0][0]), list(ans1))
+		sq.process()
+		self.assertEquals(list(sq.outs[0][0]), list(ans2))
+		sq.process()
+		self.assertEquals(list(sq.outs[0][0]), list(ans1))
+		sq.process()
+		self.assertEquals(list(sq.outs[0][0]), list(ans2))
 
 class TestEngine(unittest.TestCase):
 	def setUp(self):
-		self.engine = AudioEngine('test_effects.py')
+		self.engine = AudioEngine('effects.py')
 	#test that all effects are listed
 	def test_list_effects(self):
 		ans = ['square_wave']

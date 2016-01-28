@@ -19,6 +19,7 @@ class AudioEngine(object):
 	running = True
 	jack_client = None
 	JACK_GLOBAL = (-1, 0)	#global input / output port
+	audio_thread = None
 	def __init__(self, effects_path):
 		self.effects = []
 		self.patches = []
@@ -61,20 +62,23 @@ class AudioEngine(object):
 	def deactivate(self):
 		#stop the audio thread
 		self.running = False
-		if self.jack_client != None:
-			self.jack_client.deactivate()
 		if self.audio_thread != None:
 			self.audio_thread.join()
+			self.audio_thread = None
+		if self.jack_client != None:
+			self.jack_client.deactivate()
+			self.jack_client = None
 	# i_ind / o_ind are length 2 tuples with the effect index and the port index
 	def add_patch(self, i_ind, o_ind):
 		self.patches.append((i_ind, o_ind))
 	#continually call run and process the i/o to the audio buffers
 	def audio_thread_fn(self):
 		print "Starting audio...."
-		while self.running:
+		#while self.running:
+		for x in xrange(0, 40):
 			input_buffer = numpy.zeros((1,self.buffer_size), 'f')
 			output_buffer= self.run()
-			self.jack_client.process(input_buffer, output_buffer)
+			#self.jack_client.process(input_buffer, output_buffer)
 		print "Done audio"
 	#run all effects, in any order, once and return the output buffer
 	def run(self):
