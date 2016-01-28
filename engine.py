@@ -74,11 +74,12 @@ class AudioEngine(object):
 	#continually call run and process the i/o to the audio buffers
 	def audio_thread_fn(self):
 		print "Starting audio...."
-		#while self.running:
-		for x in xrange(0, 40):
+		while self.running:
+		#for x in xrange(0, 40):
 			input_buffer = numpy.zeros((1,self.buffer_size), 'f')
 			output_buffer= self.run()
-			#self.jack_client.process(input_buffer, output_buffer)
+			#print sum(output_buffer)
+			self.jack_client.process(output_buffer, input_buffer)
 		print "Done audio"
 	#run all effects, in any order, once and return the output buffer
 	def run(self):
