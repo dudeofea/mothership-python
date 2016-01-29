@@ -76,20 +76,30 @@ class TestEffects(unittest.TestCase):
 		self.assertEquals(list(sq.outs[0][0]), list(ans1))
 		sq.process()
 		self.assertEquals(list(sq.outs[0][0]), list(ans2))
+	#test sawtooth wave with a variety of inputs
+	def test_square_wave1(self):
+		buffer_size, freq, sample_rate = 4, 1, 4
+		sq = sawtooth_wave()
+		sq.buffer_size, sq.freq, sq.sample_rate = buffer_size, freq, sample_rate
+		sq.process()
+		ans = numpy.array([0.00, 0.25, 0.50, 0.75], 'f')
+		self.assertEquals(len(sq.outs), 1)
+		self.assertEquals(list(sq.outs[0][0]), list(ans))
 
 class TestEngine(unittest.TestCase):
 	def setUp(self):
 		self.engine = AudioEngine('effects.py')
 	#test that all effects are listed
 	def test_list_effects(self):
-		ans = ['square_wave']
+		ans = ['square_wave', 'sawtooth_wave']
 		effs= [e.__class__.__name__ for e in self.engine.get_effects()]
 		self.assertEquals(effs, ans)
 	#test that patching square_wave to output works
 	def test_patch_output1(self):
 		#set the hardware info ourselves
 		self.engine.buffer_size, self.engine.sample_rate = 20, 20
-		self.engine.effects[0].buffer_size, self.engine.effects[0].freq, self.engine.effects[0].sample_rate = self.engine.buffer_size, 2, self.engine.sample_rate
+		for x in xrange(0, len(self.engine.effects)):
+			self.engine.effects[x].buffer_size, self.engine.effects[x].freq, self.engine.effects[x].sample_rate = self.engine.buffer_size, 2, self.engine.sample_rate
 		#run the engine once
 		self.engine.add_patch((0,0), self.engine.JACK_GLOBAL)
 		out = self.engine.run()

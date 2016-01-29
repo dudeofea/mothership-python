@@ -20,11 +20,11 @@ ble = Adafruit_BluefruitLE.get_provider()
 # setup audio engine to run effects
 engine = AudioEngine('effects.py')
 engine.activate()
-engine.add_patch((0,0), engine.JACK_GLOBAL)		#patch first effect to global output
+engine.add_patch((1,0), engine.JACK_GLOBAL)		#patch first effect to global output
 effs = engine.get_effects()
-# for e in effs:
-# 	print e.__name__
-# 	print list(e.color_raw)
+for e in effs:
+	print e.__class__.__name__
+	print list(e.color_raw)
 
 # state variables for processing commands
 op_bytes = 0				#how many operand bytes are left
