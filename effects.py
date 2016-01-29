@@ -15,7 +15,7 @@ class square_wave(Effect):
 		if self.end_ind == 0:
 			self.end_ind += interval
 		#print "End index", self.end_ind
-		self.outs = (numpy.zeros((1, self.buffer_size), 'f'),)
+		self.outs = [numpy.zeros((1, self.buffer_size), 'f')]
 		while self.ind < self.buffer_size:
 			#print "Setting ind", self.ind
 			self.outs[0][0][self.ind] = 1.0
@@ -42,7 +42,7 @@ class sawtooth_wave(Effect):
 		if self.end_ind == 0:
 			self.end_ind += interval
 		#print "End index", self.end_ind
-		self.outs = (numpy.zeros((1, self.buffer_size), 'f'),)
+		self.outs = [numpy.zeros((1, self.buffer_size), 'f')]
 		while self.ind < self.buffer_size:
 			#print "Setting ind", self.ind
 			self.outs[0][0][self.ind] = self.slope_val
@@ -55,3 +55,16 @@ class sawtooth_wave(Effect):
 		self.ind -= self.buffer_size
 		self.end_ind -= self.buffer_size
 		#print self.ind, self.end_ind
+
+#takes a waveform and an envelope and returns an enveloped waveform
+class enveloper(Effect):
+	color = '#000000'
+	def process(self):
+		#don't run unless we have 2 inputs
+		if len(self.inps) < 2:
+			return
+		#multiply
+		self.outs = [numpy.multiply(self.inps[0], self.inps[1])]
+		#normalize
+		m = max(self.outs[0])
+		self.outs[0] /= m

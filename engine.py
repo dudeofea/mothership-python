@@ -8,8 +8,8 @@ from threading import Thread
 class Effect(object):
 	color = None
 	color_raw = [255, 255, 255]
-	inps = ()
-	outs = ()
+	inps = []
+	outs = []
 	def process(self):
 		pass
 
@@ -69,17 +69,30 @@ class AudioEngine(object):
 			self.jack_client.deactivate()
 			self.jack_client = None
 	# i_ind / o_ind are length 2 tuples with the effect index and the port index
+	# effect index can also be replace with the string name
 	def add_patch(self, i_ind, o_ind):
+		if type(i_ind[0]) == str:
+			possible_inds = [i for i in xrange(0, len(self.effects)) if self.effects[i].__class__.__name__ == i_ind[0]]
+			if len(possible_inds) == 0:
+				raise ValueError('Could not find an effect named '+i_ind[0])
+			i_ind = (possible_inds[0], i_ind[1])
 		self.patches.append((i_ind, o_ind))
 	#continually call run and process the i/o to the audio buffers
 	def audio_thread_fn(self):
 		print "Starting audio...."
-		while self.running:
-		#for x in xrange(0, 40):
-			input_buffer = numpy.zeros((1,self.buffer_size), 'f')
-			output_buffer= self.run()
-			#print sum(output_buffer)
-			self.jack_client.process(output_buffer, input_buffer)
+		try:
+			while self.running:
+			#for x in xrange(0, 40):
+				input_buffer = numpy.zeros((1,self.buffer_size), 'f')
+				output_buffer= self.run()
+				#print sum(output_buffer)
+				self.jack_client.process(output_buffer, input_buffer)
+		except IndexError as err:
+			#go through effects to see if one is missing a buffer
+			for e in self.effects:
+				if len(e.outs) == 0:
+					print 'Effect "'+e.__class__.__name__+'" doesn\'t have an output_buffer'
+					return
 		print "Done audio"
 	#run all effects, in any order, once and return the output buffer
 	def run(self):
@@ -87,10 +100,12 @@ class AudioEngine(object):
 		for x in xrange(0, len(self.effects)):
 			self.effects[x].process()
 		#transfer data across effects
+		#print "Patches", self.patches
 		for p in self.patches:
 			if p[0][0] < 0:
 				pass
-			else:				#input is an effect
+			else:					#input is an effect
+				#print "Patch", p[1][0], "effect", self.effects[p[0][0]].__class__.__name__
 				if p[1][0] < 0:		#ouput is global
 					output_buffer += self.effects[p[0][0]].outs[p[0][1]]
 				else:
