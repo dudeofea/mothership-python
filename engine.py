@@ -10,6 +10,8 @@ class Effect(object):
 	color_raw = [255, 255, 255]
 	inps = []
 	outs = []
+	def setup(self):
+		pass
 	def process(self):
 		pass
 
@@ -52,10 +54,11 @@ class AudioEngine(object):
 		# get info
 		self.sample_rate = self.jack_client.get_sample_rate()
 		self.buffer_size = self.jack_client.get_buffer_size()
-		# --- set jackd info in each effect
+		# --- set jackd info in each effect and run setup
 		for i in xrange(0, len(self.effects)):
 			self.effects[i].sample_rate = self.sample_rate
 			self.effects[i].buffer_size = self.buffer_size
+			self.effects[i].setup()
 		#start the audio thread
 		self.audio_thread = Thread(target = self.audio_thread_fn)
 		self.audio_thread.start()
@@ -71,11 +74,18 @@ class AudioEngine(object):
 	# i_ind / o_ind are length 2 tuples with the effect index and the port index
 	# effect index can also be replace with the string name
 	def add_patch(self, i_ind, o_ind):
+		#if input is string
 		if type(i_ind[0]) == str:
 			possible_inds = [i for i in xrange(0, len(self.effects)) if self.effects[i].__class__.__name__ == i_ind[0]]
 			if len(possible_inds) == 0:
 				raise ValueError('Could not find an effect named '+i_ind[0])
 			i_ind = (possible_inds[0], i_ind[1])
+		#if output is string
+		if type(o_ind[0]) == str:
+			possible_inds = [i for i in xrange(0, len(self.effects)) if self.effects[i].__class__.__name__ == o_ind[0]]
+			if len(possible_inds) == 0:
+				raise ValueError('Could not find an effect named '+o_ind[0])
+			o_ind = (possible_inds[0], o_ind[1])
 		self.patches.append((i_ind, o_ind))
 	#continually call run and process the i/o to the audio buffers
 	def audio_thread_fn(self):
@@ -99,15 +109,19 @@ class AudioEngine(object):
 		output_buffer = numpy.zeros((1,self.buffer_size), 'f')
 		for x in xrange(0, len(self.effects)):
 			self.effects[x].process()
+			#print self.effects[x].outs
 		#transfer data across effects
 		#print "Patches", self.patches
 		for p in self.patches:
 			if p[0][0] < 0:
 				pass
 			else:					#input is an effect
-				#print "Patch", p[1][0], "effect", self.effects[p[0][0]].__class__.__name__
-				if p[1][0] < 0:		#ouput is global
-					output_buffer += self.effects[p[0][0]].outs[p[0][1]]
-				else:
-					pass
+				#print "Patch", p[0][1], "effect", self.effects[p[0][0]].__class__.__name__
+				if len(self.effects[p[0][0]].outs) > p[0][1]:	#if we have something to output
+					if p[1][0] < 0:		#ouput is global
+						output_buffer += self.effects[p[0][0]].outs[p[0][1]]
+					else:				#output goes to another effect's input
+						if len(self.effects[p[1][0]].inps) > p[1][1]:	#don't bother unless the spot exists
+							self.effects[p[1][0]].inps[p[1][1]] = self.effects[p[0][0]].outs[p[0][1]]
+							#print "patch:", p[1][1], self.effects[p[1][0]].inps
 		return output_buffer

@@ -59,12 +59,13 @@ class sawtooth_wave(Effect):
 #takes a waveform and an envelope and returns an enveloped waveform
 class enveloper(Effect):
 	color = '#000000'
+	def setup(self):
+		#set inputs for running
+		self.inps = [numpy.zeros((1, self.buffer_size), 'f')] * 2
 	def process(self):
-		#don't run unless we have 2 inputs
-		if len(self.inps) < 2:
-			return
 		#multiply
 		self.outs = [numpy.multiply(self.inps[0], self.inps[1])]
 		#normalize
-		m = max(self.outs[0])
-		self.outs[0] /= m
+		m = max(self.outs[0][0])
+		if(m > 0):
+			self.outs[0] /= m
