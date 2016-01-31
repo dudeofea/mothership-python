@@ -11,6 +11,8 @@ class square_wave(Effect):
 	ind = 0		#index to count with
 	end_ind = 0	#index to count to
 	def process(self):
+		if self.freq == 0:
+			return
 		interval = float(self.sample_rate) / (self.freq*2)		#the length of the plateaus and valleys
 		if self.end_ind == 0:
 			self.end_ind += interval
@@ -31,12 +33,14 @@ class square_wave(Effect):
 # classic sawtooth wave effect
 class sawtooth_wave(Effect):
 	color = '#000000'
-	freq = 400
+	freq = 440
 	slope_val = 0	#current value of the slope
 	slope = 0		#how much to increment slope val
 	ind = 0			#index to count with
 	end_ind = 0		#index to count to
 	def process(self):
+		if self.freq == 0:
+			return
 		interval = float(self.sample_rate) / (self.freq)		#the length of the plateaus and valleys
 		self.slope = 1 / interval
 		if self.end_ind == 0:
