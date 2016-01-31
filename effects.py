@@ -11,9 +11,9 @@ class square_wave(Effect):
 	ind = 0		#index to count with
 	end_ind = 0	#index to count to
 	def process(self):
-		if self.freq == 0:
+		if self.inps[0] == 0:
 			return
-		interval = float(self.sample_rate) / (self.freq*2)		#the length of the plateaus and valleys
+		interval = float(self.sample_rate) / (self.inps[0]*2)		#the length of the plateaus and valleys
 		if self.end_ind == 0:
 			self.end_ind += interval
 		#print "End index", self.end_ind
@@ -39,9 +39,9 @@ class sawtooth_wave(Effect):
 	ind = 0			#index to count with
 	end_ind = 0		#index to count to
 	def process(self):
-		if self.freq == 0:
+		if self.inps[0] == 0:
 			return
-		interval = float(self.sample_rate) / (self.freq)		#the length of the plateaus and valleys
+		interval = float(self.sample_rate) / (self.inps[0])		#the length of the plateaus and valleys
 		self.slope = 1 / interval
 		if self.end_ind == 0:
 			self.end_ind += interval
@@ -73,3 +73,15 @@ class enveloper(Effect):
 		m = max(self.outs[0][0])
 		if(m > 0):
 			self.outs[0] /= m
+
+#takes a waveform and an envelope and returns an enveloped waveform
+class sequencer(Effect):
+	color = '#000000'
+	seq = [100, 200, 300, 400]
+	ind = 0
+	period = 100
+	def process(self):
+		self.outs = [self.seq[self.ind]]
+		self.ind += 1
+		if self.ind > len(self.seq):
+			self.ind = 0
