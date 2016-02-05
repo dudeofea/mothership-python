@@ -7,9 +7,11 @@ from engine import Effect
 # classic square wave effect
 class square_wave(Effect):
 	color = '#000000'
-	freq = 400
 	ind = 0		#index to count with
 	end_ind = 0	#index to count to
+	def setup(self):
+		#set inputs for running
+		self.inps = [440]
 	def process(self):
 		if self.inps[0] == 0:
 			return
@@ -33,11 +35,13 @@ class square_wave(Effect):
 # classic sawtooth wave effect
 class sawtooth_wave(Effect):
 	color = '#000000'
-	freq = 440
 	slope_val = 0	#current value of the slope
 	slope = 0		#how much to increment slope val
 	ind = 0			#index to count with
 	end_ind = 0		#index to count to
+	def setup(self):
+		#set inputs for running
+		self.inps = [440]
 	def process(self):
 		if self.inps[0] == 0:
 			return
@@ -79,9 +83,9 @@ class sequencer(Effect):
 	color = '#000000'
 	seq = [100, 200, 300, 400]
 	ind = 0
-	period = 100
+	period = 1000
 	def process(self):
 		self.outs = [self.seq[self.ind]]
 		self.ind += 1
-		if self.ind > len(self.seq):
+		if self.ind >= len(self.seq):
 			self.ind = 0

@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # Modular Synth Program controller by wireless BLE Mothership Pedal
 # modified from adafruit ble library github repo
 import Adafruit_BluefruitLE
@@ -23,12 +24,14 @@ engine.activate()
 engine.add_patch(('square_wave', 0), ('enveloper', 0))
 engine.add_patch(('sawtooth_wave', 0), ('enveloper', 1))
 engine.add_patch(('enveloper', 0), engine.JACK_GLOBAL)
+#engine.add_patch(('sequencer', 0), ('square_wave', 0))
+#engine.add_patch(('square_wave', 0), engine.JACK_GLOBAL)
 effs = engine.get_effects()
 for e in effs:
 	print e.__class__.__name__
 	print list(e.color_raw)
 for x in xrange(0, 400):
-	engine.effects[0].freq = x
+	engine.effects[3].inps[0] = x
 	time.sleep(0.1)
 
 # state variables for processing commands
