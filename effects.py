@@ -89,3 +89,9 @@ class sequencer(Effect):
 		self.ind += 1
 		if self.ind >= len(self.seq):
 			self.ind = 0
+
+#spits out random noise
+class white_noise(Effect):
+	color = '#000000'
+	def process(self):
+		self.outs = numpy.random.random(self.buffer_size)
