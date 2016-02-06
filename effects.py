@@ -64,6 +64,18 @@ class sawtooth_wave(Effect):
 		self.end_ind -= self.buffer_size
 		#print self.ind, self.end_ind
 
+class sine_wave(Effect):
+	color = '#000000'
+	ind = 0			#index to count with
+	end_ind = 0		#index to count to
+	def setup(self):
+		#set inputs for running
+		self.inps = [440]
+	def process(self):
+		if self.inps[0] == 0:
+			return
+		interval = float(self.sample_rate) / (self.inps[0])		#the length of the plateaus and valleys
+
 #takes a waveform and an envelope and returns an enveloped waveform
 class enveloper(Effect):
 	color = '#000000'
