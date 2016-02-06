@@ -94,4 +94,4 @@ class sequencer(Effect):
 class white_noise(Effect):
 	color = '#000000'
 	def process(self):
-		self.outs = numpy.random.random(self.buffer_size)
+		self.outs = numpy.random.rand(1, self.buffer_size)
