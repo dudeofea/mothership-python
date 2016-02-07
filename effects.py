@@ -93,14 +93,21 @@ class enveloper(Effect):
 #takes a waveform and an envelope and returns an enveloped waveform
 class sequencer(Effect):
 	color = '#000000'
-	seq = [100, 200, 300, 400]
+	seq = [987.77, 1318.51, 1174.66]
 	ind = 0
-	period = 1000
+	cnt = 0
+	period = 2
+	def setup(self):
+		#set swing offset to 0
+		self.inps = [0]
 	def process(self):
 		self.outs = [self.seq[self.ind]]
-		self.ind += 1
-		if self.ind >= len(self.seq):
-			self.ind = 0
+		self.cnt += 1
+		if self.cnt > self.period:
+			self.cnt -= self.period
+			self.ind += 1
+			if self.ind >= len(self.seq):
+				self.ind = 0
 
 #spits out random noise
 class white_noise(Effect):

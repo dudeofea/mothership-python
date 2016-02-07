@@ -33,6 +33,8 @@ class AudioEngine(object):
 			#find all items that are classes and have Effect as subclass
 			if inspect.isclass(obj) and obj.__bases__[0].__name__ == 'Effect':
 				self.effects.append(obj())
+		# --- sort all the effects by name
+		self.effects.sort(key=lambda x: x.__class__.__name__)
 		# --- compute the raw colors given the hex string
 		for i in xrange(0, len(self.effects)):
 			if self.effects[i].color:
