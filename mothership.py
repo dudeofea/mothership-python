@@ -28,9 +28,9 @@ engine.add_patch(('enveloper', 0), engine.JACK_GLOBAL)
 effs = engine.get_effects()
 for e in effs:
 	print e.__class__.__name__
-for x in numpy.logspace(0, 3, 1000):
-	engine.effects[4].inps[0] = x
-	time.sleep(0.1)
+# for x in numpy.logspace(0, 3, 1000):
+# 	engine.effects[4].inps[0] = x
+# 	time.sleep(0.1)
 
 # state variables for processing commands
 op_bytes = 0				#how many operand bytes are left
@@ -43,14 +43,14 @@ stay_connected = True
 # ble listen thread
 def main():
 	#function to catch SIGINT and quit
-	def signal_handler(signal, frame):
-		global stay_connected
-		print "Quitting..."
-		stay_connected = False
-		engine.deactivate()
-		ble.disconnect_devices([UART_SERVICE_UUID])
-		exit(0)
-	signal.signal(signal.SIGINT, signal_handler)
+	# def signal_handler(signal, frame):
+	# 	global stay_connected
+	# 	print "Quitting..."
+	# 	stay_connected = False
+	# 	engine.deactivate()
+	# 	ble.disconnect_devices([UART_SERVICE_UUID])
+	# 	exit(0)
+	# signal.signal(signal.SIGINT, signal_handler)
 
 	global stay_connected
 	# Clear any cached data because both bluez and CoreBluetooth have issues with caching data and it going stale.
@@ -108,7 +108,7 @@ def main():
 						tx.write_value(p1)
 						#then names
 						for e in effs:
-							tx.write_value(e.__name__+'\n')
+							tx.write_value(e.__class__.__name__+'\n')
 						#then colors
 						for e in effs:
 							c = e.color_raw
@@ -156,5 +156,4 @@ def main():
 		device.disconnect()
 
 ble.initialize()				# Initialize the BLE system.  MUST be called before other BLE calls!
-main()
-#ble.run_mainloop_with(main)		# Start the mainloop to process BLE events
+ble.run_mainloop_with(main)		# Start the mainloop to process BLE events
