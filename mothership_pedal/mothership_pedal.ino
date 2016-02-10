@@ -31,7 +31,6 @@ int effects_len = -1;
 char **effect_names = NULL;	 	//array of strings, names of effects
 byte **effect_colors = NULL;	//array of 3-tuple bytes for colors
 int pots[10];					//potentiometer values
-int pot_track[10];				//indicates if potentiometer value should be updated on server-side
 
 //edit page varsy
 byte edit_page = 0;
@@ -148,52 +147,28 @@ void print_array(char *arr, int arr_len){
 void sendPotValues(){
 	//send the pots we're tracking
 	char buf[3];
+	Serial.print("UPD ");
+	Serial.print(sel_effect);
+	Serial.print(" ");
 	for(int i = 0; i < 10; i++){
-		if(pot_track[i] > 0){
-			buf[0] = CMD_UPDATE;
-			buf[0] |= (i & 0xF) << 3;
-			buf[0] |= (pots[i] >> 7) & 0x07;
-			buf[1] = ((pots[i] & 0x7F) << 1) | 0x01;		//add one at the end to prevent a 0 byte
-			ble.print(buf);
-		}
+		Serial.print(pots[i]);
+		Serial.print(" ");
 	}
+	Serial.print("\n");
 }
 
 void loop() {
 	// put your main code here, to run repeatedly:
-	delay(20);
+	//delay(20);
 	//read potentiometer values
 	int pot_val = 0;
 	int diff = 0;
 	for(int i = 0; i < 10; i++){
-		pot_val = analogRead(i);
-		diff = abs(pot_val - pots[i]);
-		if(pot_track[i] > 0){
-			pots[i] = pot_val;
-			// Serial.print("Trackval(");
-			// Serial.print(i);
-			// Serial.print("): ");
-			// Serial.println(pot_val);
-			if(diff <= 2){
-				pot_track[i]--;
-			}else{
-				pot_track[i]++;
-				if(pot_track[i] > MAX_TRACK){
-					pot_track[i] = MAX_TRACK;
-				}
-			}
-		}
-		else if(diff > 15){
-			pots[i] = pot_val;
-			pot_track[i] = MAX_TRACK;
-			// Serial.print("New val (");
-			// Serial.print(i);
-			// Serial.print("): ");
-			// Serial.println(pot_val);
-		}
+		pots[i] = analogRead(i);
 	}
+	sendPotValues();
 	//initialize if needed
-	if(effects_len < 0){
+	/*if(effects_len < 0){
 		char cmd_buf[2] = { CMD_LIST, 0 };
 		ble.print(cmd_buf);
 		delay(500);
@@ -290,5 +265,5 @@ void loop() {
 				edit_page = 1;
 			}
 		}
-	}
+	}*/
 }

@@ -1,6 +1,7 @@
+#
 #	Mothership audio engine, runs all effects (in the order added) and
 #	processes inputs (from effects / global input) and outputs (same)
-
+#
 import sys, inspect, time, numpy, jack
 from threading import Thread
 
