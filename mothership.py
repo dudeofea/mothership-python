@@ -25,9 +25,6 @@ engine.add_patch(('sequencer', 0), ('sawtooth_wave', 0))
 engine.add_patch(('sawtooth_wave', 0), ('enveloper', 0))
 engine.add_patch(('square_wave', 0), ('enveloper', 1))
 engine.add_patch(('enveloper', 0), engine.JACK_GLOBAL)
-effs = engine.get_effects()
-for e in effs:
-	print e.__class__.__name__
 # for x in numpy.logspace(0, 3, 1000):
 # 	engine.effects[4].inps[0] = x
 # 	time.sleep(0.1)
@@ -36,9 +33,19 @@ for e in effs:
 op_bytes = 0				#how many operand bytes are left
 current_command = None		#the current command we are processing
 current_module = None		#the currently selected module
+total_bits = None
 
 # for handing device
 stay_connected = True
+
+def bits2int(array):
+	val = 0
+	pos = 1		#weight of position
+	for x in xrange(len(array)-1,-1,-1):	#count backwards to 0
+		if array[x]:
+			val += pos
+		pos *= 2
+	return val
 
 # ble listen thread
 def main():
@@ -79,7 +86,11 @@ def main():
 		adapter.stop_scan()
 
 	print('Connecting to device...')
-	device.connect()  # Will time out after 60 seconds, specify timeout_sec parameter
+	try:
+		device.connect()  # Will time out after 60 seconds, specify timeout_sec parameter
+	except dbus.exceptions.DBusException:
+		print "dbus exception"
+		exit(0)
 	# to change the timeout.
 	try:
 		print('Discovering services...')
@@ -92,7 +103,7 @@ def main():
 
 		#function to receive data from device
 		def received(data):
-			global op_bytes, current_command, current_module
+			global op_bytes, current_command, current_module, total_bits
 			for d in data:
 				bits = bitarray.bitarray()
 				bits.frombytes(bytes(d))
@@ -120,32 +131,24 @@ def main():
 					elif cmd_bits[:1] == CMD_UPDATE:
 						print "Update:", cmd_bits
 						op_bytes = 1
+						current_command = CMD_UPDATE
+						total_bits = bits
 					else:
 						print "Unknown command:", bits[:2].to01()
 				else:									#something else entirely
 					if current_command == CMD_MOD_SELECT:
-						print "Selecting module #", bits
+						mod = bits2int(bits) - 1
+						current_module = mod
+						print "Selecting module #", mod
+					if current_command == CMD_UPDATE:
+						total_bits += bits
+						val = bits2int(total_bits[5:15])
+						arg = bits2int(total_bits[1:5])
+						print "Updating...", arg, val
+						if current_module != None:
+							if arg >= 0 and arg < len(engine.effects[current_module].inps):
+								engine.effects[current_module].inps[arg] = val
 					op_bytes -= 1
-			# global data_split
-			# for d in data:
-			# 	if d == '\n':
-			# 		print('Received: {0}'.format(list(data_split)))
-			# 		if data_split.startswith('LIST'):	#list effect names
-			# 			effs = engine.get_effects()
-			# 			#pad first packet to 20 bytes to ensure it's separate
-			# 			p1 = [len(effs)] + [' '] * 18 + ['\n']
-			# 			tx.write_value(p1)	#send length first
-			# 			for e in effs:
-			# 				tx.write_value(e.__name__+'\n')
-			# 			for e in effs:
-			# 				c = e.color_raw
-			# 				c.append('\n')
-			# 				tx.write_value(c)
-			# 		if data_split.startswith('U'):	#effect argument update
-			# 			print list(data_split)
-			# 		data_split = ""
-			# 	else:
-			# 		data_split += d
 		rx.start_notify(received)
 
 		while stay_connected:
