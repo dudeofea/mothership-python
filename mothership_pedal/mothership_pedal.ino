@@ -128,6 +128,22 @@ int ble_read(){
 	}
 	return 0;
 }
+//returns first valid char from serial port
+int serial_read_char(){
+	int val = -1;
+	while(val < 0)
+		val = Serial.read();
+	return val;
+}
+//read a whole line of chars until newline
+void serial_read_line(char* buf, int max_len){
+	int val = serial_read_char();;
+	int ind = 0;
+	while(val != 10 && ind < max_len){		//while not newline and in array
+		buf[ind++] = val;
+		val = serial_read_char();
+	}
+}
 //set the color of the lcd given a byte array
 void color_lcd(byte* colors){
 	analogWrite(2, 255 - colors[2]);		//B
@@ -166,52 +182,44 @@ void loop() {
 	for(int i = 0; i < 10; i++){
 		pots[i] = analogRead(i);
 	}
-	sendPotValues();
 	//initialize if needed
-	/*if(effects_len < 0){
-		char cmd_buf[2] = { CMD_LIST, 0 };
-		ble.print(cmd_buf);
-		delay(500);
+	if(effects_len < 0){
+		//send command
+		Serial.print("LST\n");
 		//get length first (from hex value, max 255)
-		if(ble_read() < 0){ return; }
-		//load the data
-		lcd.clear();
-		lcd.setCursor(0,0);
-		lcd.print("Loading...");
-		int len = ble.buffer[0];
-		Serial.print(F("[len] ")); Serial.println(ble.buffer[0], DEC);
-		Serial.print(F("[extra] ")); Serial.println(&ble.buffer[1]);
+		int mods = serial_read_char();
+		Serial.print("ECHO ");
+		Serial.println(mods);
 		//allocate space (this assumes I either reset / clean up after myself)
-		effect_names = (char**)malloc(sizeof(char*) * len);
-		effect_colors= (byte**)malloc(sizeof(byte*) * len);
+		effect_names = (char**)malloc(sizeof(char*) * mods);
+		effect_colors= (byte**)malloc(sizeof(byte*) * mods);
 		//get effects names
 		int i = 0;
-		while(i < len){
-			if(ble_read() == 0){
-				Serial.print(F("[name] ")); Serial.println(ble.buffer);
-				effect_names[i] = (char*)malloc(sizeof(char) * (LCD_WIDTH + 1));
-				strncpy(effect_names[i], ble.buffer, LCD_WIDTH);
-				i++;
-			}
+		while(i < mods){
+			effect_names[i] = (char*)malloc(sizeof(char) * (LCD_WIDTH + 1));
+			memset(effect_names[i], 0, LCD_WIDTH+1);	//clear the buffer
+			serial_read_line(effect_names[i], LCD_WIDTH);
+			Serial.print("ECHO NAME "); Serial.println(effect_names[i]);
+			i++;
 		}
-		//get effects colors
-		i = 0;
-		while(i < len){
-			if(ble_read() == 0){
-				Serial.print(F("[color] "));
-				Serial.print(ble.buffer[0], HEX);
-				Serial.print(ble.buffer[1], HEX);
-				Serial.println(ble.buffer[2], HEX);
-				effect_colors[i] = (byte*)malloc(sizeof(byte) * 3);
-				memcpy(effect_colors[i], ble.buffer, sizeof(byte) * 3);
-				Serial.print(F("[color2] "));
-				Serial.print(effect_colors[i][0], DEC); Serial.print(F(" "));
-				Serial.print(effect_colors[i][1], DEC); Serial.print(F(" "));
-				Serial.println(effect_colors[i][2], DEC);
-				i++;
-			}
-		}
-		effects_len = len;
+		// //get effects colors
+		// i = 0;
+		// while(i < len){
+		// 	if(ble_read() == 0){
+		// 		Serial.print(F("[color] "));
+		// 		Serial.print(ble.buffer[0], HEX);
+		// 		Serial.print(ble.buffer[1], HEX);
+		// 		Serial.println(ble.buffer[2], HEX);
+		// 		effect_colors[i] = (byte*)malloc(sizeof(byte) * 3);
+		// 		memcpy(effect_colors[i], ble.buffer, sizeof(byte) * 3);
+		// 		Serial.print(F("[color2] "));
+		// 		Serial.print(effect_colors[i][0], DEC); Serial.print(F(" "));
+		// 		Serial.print(effect_colors[i][1], DEC); Serial.print(F(" "));
+		// 		Serial.println(effect_colors[i][2], DEC);
+		// 		i++;
+		// 	}
+		// }
+		// effects_len = len;
 	//edit effect page
 	}else if(edit_page == 1){
 		//send the potentiometer values
@@ -265,5 +273,5 @@ void loop() {
 				edit_page = 1;
 			}
 		}
-	}*/
+	}
 }

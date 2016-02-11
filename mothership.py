@@ -19,6 +19,5 @@ engine.add_patch(('enveloper', 0), engine.JACK_GLOBAL)
 
 # setup audio controller and pass it the engine
 controller = AudioController(engine)
-controller.update()
 
 print engine.get_effects()
