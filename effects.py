@@ -6,7 +6,7 @@ from engine import Effect
 
 # classic square wave effect
 class square_wave(Effect):
-	color = '#000000'
+	color = '#FF0000'
 	ind = 0		#index to count with
 	end_ind = 0	#index to count to
 	def setup(self):
@@ -34,7 +34,7 @@ class square_wave(Effect):
 
 # classic sawtooth wave effect
 class sawtooth_wave(Effect):
-	color = '#000000'
+	color = '#00FF00'
 	slope_val = 0	#current value of the slope
 	slope = 0		#how much to increment slope val
 	ind = 0			#index to count with
@@ -65,7 +65,7 @@ class sawtooth_wave(Effect):
 		#print self.ind, self.end_ind
 
 class sine_wave(Effect):
-	color = '#000000'
+	color = '#0000FF'
 	ind = 0			#index to count with
 	end_ind = 0		#index to count to
 	def setup(self):
@@ -78,7 +78,7 @@ class sine_wave(Effect):
 
 #takes a waveform and an envelope and returns an enveloped waveform
 class enveloper(Effect):
-	color = '#000000'
+	color = '#550000'
 	def setup(self):
 		#set inputs for running
 		self.inps = [numpy.zeros((1, self.buffer_size), 'f')] * 2
@@ -92,7 +92,7 @@ class enveloper(Effect):
 
 #takes a waveform and an envelope and returns an enveloped waveform
 class sequencer(Effect):
-	color = '#000000'
+	color = '#005500'
 	seq = [987.77, 1318.51, 1174.66]
 	ind = 0
 	cnt = 0
@@ -111,6 +111,6 @@ class sequencer(Effect):
 
 #spits out random noise
 class white_noise(Effect):
-	color = '#000000'
+	color = '#000055'
 	def process(self):
 		self.outs = numpy.random.rand(1, self.buffer_size)

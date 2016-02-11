@@ -202,24 +202,20 @@ void loop() {
 			Serial.print("ECHO NAME "); Serial.println(effect_names[i]);
 			i++;
 		}
-		// //get effects colors
-		// i = 0;
-		// while(i < len){
-		// 	if(ble_read() == 0){
-		// 		Serial.print(F("[color] "));
-		// 		Serial.print(ble.buffer[0], HEX);
-		// 		Serial.print(ble.buffer[1], HEX);
-		// 		Serial.println(ble.buffer[2], HEX);
-		// 		effect_colors[i] = (byte*)malloc(sizeof(byte) * 3);
-		// 		memcpy(effect_colors[i], ble.buffer, sizeof(byte) * 3);
-		// 		Serial.print(F("[color2] "));
-		// 		Serial.print(effect_colors[i][0], DEC); Serial.print(F(" "));
-		// 		Serial.print(effect_colors[i][1], DEC); Serial.print(F(" "));
-		// 		Serial.println(effect_colors[i][2], DEC);
-		// 		i++;
-		// 	}
-		// }
-		// effects_len = len;
+		//get effects colors
+		i = 0;
+		while(i < mods){
+			effect_colors[i] = (byte*)malloc(sizeof(byte) * 3);
+			for(int j = 0; j < 3; j++){
+				effect_colors[i][j] = serial_read_char();
+			}
+			Serial.print(F("ECHO COLOR "));
+			Serial.print(effect_colors[i][0], HEX);
+			Serial.print(effect_colors[i][1], HEX);
+			Serial.println(effect_colors[i][2], HEX);
+			i++;
+		}
+		effects_len = mods;
 	//edit effect page
 	}else if(edit_page == 1){
 		//send the potentiometer values
@@ -245,9 +241,6 @@ void loop() {
 		//switch if effect changes
 		if(new_sel != sel_effect && new_sel < effects_len){
 			sel_effect = new_sel;
-			//send info to Mothership
-			char cmd_buf[3] = { CMD_MOD_SELECT, sel_effect + 1, 0 };
-			ble.print(cmd_buf);
 			//color the lcd
 			color_lcd(effect_colors[sel_effect]);
 			//display name

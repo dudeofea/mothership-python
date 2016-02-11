@@ -9,6 +9,7 @@ from threading import Thread
 class Effect(object):
 	color = None
 	color_raw = [255, 255, 255]
+	args = [0] * 10
 	inps = []
 	outs = []
 	def setup(self):
