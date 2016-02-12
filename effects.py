@@ -11,8 +11,10 @@ class square_wave(Effect):
 	end_ind = 0	#index to count to
 	def setup(self):
 		#set inputs for running
-		self.inps = [440]
+		self.inps = [0]
 	def process(self):
+		if self.inps[0] == 0:
+			self.inps[0] = self.args[0]
 		if self.inps[0] == 0:
 			return
 		interval = float(self.sample_rate) / (self.inps[0]*2)		#the length of the plateaus and valleys
@@ -30,7 +32,7 @@ class square_wave(Effect):
 				self.end_ind += 2 * interval
 		self.ind -= self.buffer_size
 		self.end_ind -= self.buffer_size
-		#print self.ind, self.end_ind
+		self.inps = [0]
 
 # classic sawtooth wave effect
 class sawtooth_wave(Effect):
@@ -41,8 +43,10 @@ class sawtooth_wave(Effect):
 	end_ind = 0		#index to count to
 	def setup(self):
 		#set inputs for running
-		self.inps = [440]
+		self.inps = [0]
 	def process(self):
+		if self.inps[0] == 0:
+			self.inps[0] = self.args[0]
 		if self.inps[0] == 0:
 			return
 		interval = float(self.sample_rate) / (self.inps[0])		#the length of the plateaus and valleys
@@ -62,7 +66,7 @@ class sawtooth_wave(Effect):
 				self.end_ind += interval
 		self.ind -= self.buffer_size
 		self.end_ind -= self.buffer_size
-		#print self.ind, self.end_ind
+		self.inps = [0]
 
 class sine_wave(Effect):
 	color = '#0000FF'

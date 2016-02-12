@@ -9,7 +9,7 @@ from threading import Thread
 class Effect(object):
 	color = None
 	color_raw = [255, 255, 255]
-	args = [0] * 10
+	args = []
 	inps = []
 	outs = []
 	def setup(self):
@@ -43,6 +43,8 @@ class AudioEngine(object):
 				string = self.effects[i].color.replace('#', '')
 				comp = [string[j:j+2] for j in range(0, len(string), 2)]
 				self.effects[i].color_raw = [int(c, 16) for c in comp]
+			#init arg values seperately from each other
+			self.effects[i].args = [0] * 10
 	def get_effects(self):
 		return self.effects
 	def activate(self):
