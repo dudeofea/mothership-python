@@ -4,16 +4,16 @@
 #	Uses a seria monitor to read data from mothership arduino
 #	pedal and select modules / edit their arguments
 #
-import sys
+import sys, serial
 
 class AudioController(object):
 	def __init__(self, engine):
 		self.engine = engine
-		with open('/dev/ttyACM0', 'r+') as arduino:
+		with serial.Serial('/dev/ttyACM0', 115200) as arduino:
 			buf = ""
 			self.arduino = arduino
 			while 1:
-				chars = self.arduino.read()
+				chars = self.arduino.readline()
 				buf += chars
 				while 1:
 					try:
