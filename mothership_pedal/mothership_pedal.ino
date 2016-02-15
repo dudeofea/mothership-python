@@ -3,23 +3,18 @@
 #include <SPI.h>
 #include <LiquidCrystal.h>
 
-//<serial_port>, <mode_pin (-1 is unused)>
 LiquidCrystal lcd(22, 23, 27, 26, 25, 24);
 
-#define VERBOSE_MODE				true  // If set to 'true' enables debug output
-#define FACTORYRESET_ENABLE			1
-#define MINIMUM_FIRMWARE_VERSION	"0.6.6"
-#define MODE_LED_BEHAVIOUR			"MODE"
 #define BUTTON_LEFT					51
 #define BUTTON_CENTER				52
 #define BUTTON_RIGHT				53
 #define LCD_WIDTH					16
 #define MAX_TRACK					15
 
-// Mothership commands (stored in first 2 bits)
-#define CMD_UPDATE					0x80
-#define CMD_LIST					0x20
-#define CMD_MOD_SELECT				0x40
+// LCD Screens
+#define PAGE_DEFAULT				0
+#define PAGE_EDIT					1
+#define PAGE_ADD					2
 
 //pedal state variables
 int sel_effect = -1;
@@ -28,9 +23,9 @@ char **effect_names = NULL;	 	//array of strings, names of effects
 byte **effect_colors = NULL;	//array of 3-tuple bytes for colors
 int pots[10];					//potentiometer values
 
-//edit page varsy
-byte edit_page = 0;
-byte center_release = 1;
+//page / button variables
+byte page = PAGE_DEFAULT;
+byte button_releases[3] = {0, 0, 0};
 
 // A small helper
 void error(const __FlashStringHelper*err) {
@@ -73,6 +68,39 @@ void serial_read_line(char* buf, int max_len){
 		val = serial_read_char();
 	}
 }
+//reads in a list of effects info
+void serial_read_effects(){
+	//get length first (from hex value, max 255)
+	int mods = serial_read_char();
+	Serial.print("ECHO ");
+	Serial.println(mods);
+	//allocate space (this assumes I either reset / clean up after myself)
+	effect_names = (char**)malloc(sizeof(char*) * mods);
+	effect_colors= (byte**)malloc(sizeof(byte*) * mods);
+	//get effects names
+	int i = 0;
+	while(i < mods){
+		effect_names[i] = (char*)malloc(sizeof(char) * (LCD_WIDTH + 1));
+		memset(effect_names[i], 0, LCD_WIDTH+1);	//clear the buffer
+		serial_read_line(effect_names[i], LCD_WIDTH);
+		Serial.print("ECHO NAME "); Serial.println(effect_names[i]);
+		i++;
+	}
+	//get effects colors
+	i = 0;
+	while(i < mods){
+		effect_colors[i] = (byte*)malloc(sizeof(byte) * 3);
+		for(int j = 0; j < 3; j++){
+			effect_colors[i][j] = serial_read_char();
+		}
+		Serial.print(F("ECHO COLOR "));
+		Serial.print(effect_colors[i][0], HEX);
+		Serial.print(effect_colors[i][1], HEX);
+		Serial.println(effect_colors[i][2], HEX);
+		i++;
+	}
+	effects_len = mods;
+}
 //set the color of the lcd given a byte array
 void color_lcd(byte* colors){
 	analogWrite(2, 255 - colors[2]);		//B
@@ -101,6 +129,18 @@ void sendPotValues(){
 	}
 	Serial.print("\n");
 }
+//returns which button was pressed (as in the MACRO), on release
+byte buttonPressed(int button){
+	//poll buttons
+	int val = digitalRead(button);
+	if(val != LOW){
+		button_releases[button - BUTTON_LEFT] = 1;
+	}else if(button_releases[button - BUTTON_LEFT] == 1){
+		button_releases[button - BUTTON_LEFT] = 0;
+		return 1;
+	}
+	return 0;
+}
 
 void loop() {
 	// put your main code here, to run repeatedly:
@@ -113,60 +153,59 @@ void loop() {
 	}
 	//initialize if needed
 	if(effects_len < 0){
-		//send command
-		Serial.print("LST\n");
-		//get length first (from hex value, max 255)
-		int mods = serial_read_char();
-		Serial.print("ECHO ");
-		Serial.println(mods);
-		//allocate space (this assumes I either reset / clean up after myself)
-		effect_names = (char**)malloc(sizeof(char*) * mods);
-		effect_colors= (byte**)malloc(sizeof(byte*) * mods);
-		//get effects names
-		int i = 0;
-		while(i < mods){
-			effect_names[i] = (char*)malloc(sizeof(char) * (LCD_WIDTH + 1));
-			memset(effect_names[i], 0, LCD_WIDTH+1);	//clear the buffer
-			serial_read_line(effect_names[i], LCD_WIDTH);
-			Serial.print("ECHO NAME "); Serial.println(effect_names[i]);
-			i++;
-		}
-		//get effects colors
-		i = 0;
-		while(i < mods){
-			effect_colors[i] = (byte*)malloc(sizeof(byte) * 3);
-			for(int j = 0; j < 3; j++){
-				effect_colors[i][j] = serial_read_char();
-			}
-			Serial.print(F("ECHO COLOR "));
-			Serial.print(effect_colors[i][0], HEX);
-			Serial.print(effect_colors[i][1], HEX);
-			Serial.println(effect_colors[i][2], HEX);
-			i++;
-		}
-		effects_len = mods;
-	//edit effect page
-	}else if(edit_page == 1){
+		//send command to get current modules
+		Serial.print("CUR\n");
+		serial_read_effects();
+	//edit screen, edit a module
+	}else if(page == PAGE_EDIT){
 		//send the potentiometer values
 		sendPotValues();
 		//show the screen
 		lcd.setCursor(0,1);
-		lcd.print("     (back)     ");
+		lcd.print("(#)  (back)     ");
 		//poll buttons
-		int val = digitalRead(BUTTON_CENTER);
-		if(val != LOW){
-			center_release = 1;
+		if(buttonPressed(BUTTON_CENTER)){
+			page = PAGE_DEFAULT;
+			//reset effects
+			sel_effect = -1;
+			effects_len = -1;
 		}
-		if(center_release == 1){
-			if(val == LOW){
-				edit_page = 0;
-				center_release = 0;
-				//reset effects
-				sel_effect = -1;
-				effects_len = -1;
-			}
+	//add a new effect to current effects
+	}else if(page == PAGE_ADD){
+		int new_sel = analogRead(0) / (900 / (effects_len));
+		//switch if effect changes
+		if(new_sel != sel_effect && new_sel < effects_len){
+			sel_effect = new_sel;
+			//color the lcd
+			color_lcd(effect_colors[sel_effect]);
+			//display name
+			lcd.clear();
+			lcd.setCursor(0,0);
+			//put name in center
+			int left_pad = (16 - strlen(effect_names[sel_effect])) / 2;
+			for(int i = 0; i < left_pad; i++){ lcd.print(" "); }
+			lcd.print(effect_names[sel_effect]);
+			//print button indicator
+			lcd.setCursor(0,1);
+			lcd.print("(add)     (back)");
 		}
-	//scroll through possible screens
+		//add the effect
+		if(buttonPressed(BUTTON_LEFT)){
+			Serial.print("ADD ");
+			Serial.println(effect_names[sel_effect]);
+			page = PAGE_DEFAULT;
+			//reset effects
+			sel_effect = -1;
+			effects_len = -1;
+		}
+		//cancel
+		if(buttonPressed(BUTTON_RIGHT)){
+			page = PAGE_DEFAULT;
+			//reset effects
+			sel_effect = -1;
+			effects_len = -1;
+		}
+	//default screen, scroll through current effects
 	}else{
 		int new_sel = analogRead(0) / (900 / (effects_len));
 		//switch if effect changes
@@ -185,17 +224,16 @@ void loop() {
 			lcd.setCursor(0,1);
 			lcd.print("(+)  (edit)  (-)");
 		}
-		//poll buttons
-		int val = digitalRead(BUTTON_CENTER);
-		if(val != LOW){
-			center_release = 1;
+		if(buttonPressed(BUTTON_LEFT)){
+			page = PAGE_ADD;
+			//get all possible effects to add
+			Serial.print("LST\n");
+			serial_read_effects();
+			//reset selected
+			sel_effect = -1;
 		}
-		if(center_release == 1){
-			if(val == LOW){
-				//Serial.println("center");
-				center_release = 0;
-				edit_page = 1;
-			}
+		if(buttonPressed(BUTTON_CENTER)){
+			page = PAGE_EDIT;
 		}
 	}
 }

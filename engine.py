@@ -18,8 +18,9 @@ class Effect(object):
 		pass
 
 class AudioEngine(object):
-	effects = []
-	patches = []
+	effects = []			#all effects to choose from
+	running_effects = []	#currently active effects
+	patches = []			#patches between effects
 	running = True
 	jack_client = None
 	JACK_GLOBAL = (-1, 0)	#global input / output port
@@ -34,9 +35,9 @@ class AudioEngine(object):
 		for name, obj in effects_namespace.iteritems():
 			#find all items that are classes and have Effect as subclass
 			if inspect.isclass(obj) and obj.__bases__[0].__name__ == 'Effect':
-				self.effects.append(obj())
+				self.effects.append(obj)
 		# --- sort all the effects by name
-		self.effects.sort(key=lambda x: x.__class__.__name__)
+		self.effects.sort(key=lambda x: x.__name__)
 		# --- compute the raw colors given the hex string
 		for i in xrange(0, len(self.effects)):
 			if self.effects[i].color:
@@ -77,21 +78,34 @@ class AudioEngine(object):
 		if self.jack_client != None:
 			self.jack_client.deactivate()
 			self.jack_client = None
+	# get the index of a certain effect in self.effects
+	def get_index(self, name):
+		possible_inds = [i for i in xrange(0, len(self.effects)) if self.effects[i].__name__ == name]
+		if len(possible_inds) == 0:
+			raise ValueError('Could not find an effect named '+name)
+		return possible_inds[0]
+	# get the index of a certain running effect in self.running_effects
+	def get_running_index(self, name):
+		possible_inds = [i for i in xrange(0, len(self.running_effects)) if self.running_effects[i].__class__.__name__ == name]
+		if len(possible_inds) == 0:
+			raise ValueError('Could not find an effect named '+name)
+		return possible_inds[0]
+	# add an array of effects to running_effects from available effects
+	def add_effect(self, effs):
+		print effs
+		for to_add in effs:
+			ind = self.get_index(to_add)
+			print "index for", to_add, ind
+			self.running_effects.append(self.effects[ind]())
 	# i_ind / o_ind are length 2 tuples with the effect index and the port index
 	# effect index can also be replace with the string name
 	def add_patch(self, i_ind, o_ind):
 		#if input is string
 		if type(i_ind[0]) == str:
-			possible_inds = [i for i in xrange(0, len(self.effects)) if self.effects[i].__class__.__name__ == i_ind[0]]
-			if len(possible_inds) == 0:
-				raise ValueError('Could not find an effect named '+i_ind[0])
-			i_ind = (possible_inds[0], i_ind[1])
+			i_ind = (self.get_running_index(i_ind[0]), i_ind[1])
 		#if output is string
 		if type(o_ind[0]) == str:
-			possible_inds = [i for i in xrange(0, len(self.effects)) if self.effects[i].__class__.__name__ == o_ind[0]]
-			if len(possible_inds) == 0:
-				raise ValueError('Could not find an effect named '+o_ind[0])
-			o_ind = (possible_inds[0], o_ind[1])
+			o_ind = (self.get_running_index(o_ind[0]), o_ind[1])
 		self.patches.append((i_ind, o_ind))
 	#continually call run and process the i/o to the audio buffers
 	def audio_thread_fn(self):
