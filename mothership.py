@@ -9,11 +9,10 @@ from controller import AudioController
 # setup audio engine to run effects
 engine = AudioEngine('effects.py')
 #engine.activate()
-engine.add_effect(['sawtooth_wave', 'enveloper', 'square_wave'])
 #engine.add_patch(('sequencer', 0), ('sawtooth_wave', 0))
-engine.add_patch(('sawtooth_wave', 0), ('enveloper', 0))
-engine.add_patch(('square_wave', 0), ('enveloper', 1))
-engine.add_patch(('enveloper', 0), engine.JACK_GLOBAL)
+# engine.add_patch(('sawtooth_wave', 0), ('enveloper', 0))
+# engine.add_patch(('square_wave', 0), ('enveloper', 1))
+# engine.add_patch(('enveloper', 0), engine.JACK_GLOBAL)
 # for x in numpy.logspace(0, 3, 1000):
 # 	engine.effects[4].inps[0] = x
 # 	time.sleep(0.1)

@@ -74,6 +74,10 @@ void serial_read_effects(){
 	int mods = serial_read_char();
 	Serial.print("ECHO ");
 	Serial.println(mods);
+	if(mods == 0){
+		effects_len = mods;
+		return;
+	}
 	//allocate space (this assumes I either reset / clean up after myself)
 	effect_names = (char**)malloc(sizeof(char*) * mods);
 	effect_colors= (byte**)malloc(sizeof(byte*) * mods);
@@ -207,22 +211,41 @@ void loop() {
 		}
 	//default screen, scroll through current effects
 	}else{
-		int new_sel = analogRead(0) / (900 / (effects_len));
-		//switch if effect changes
-		if(new_sel != sel_effect && new_sel < effects_len){
-			sel_effect = new_sel;
-			//color the lcd
-			color_lcd(effect_colors[sel_effect]);
-			//display name
+		if(effects_len > 0){	//if we have effects
+			int new_sel = analogRead(0) / (900 / (effects_len));
+			//switch if effect changes
+			if(new_sel != sel_effect && new_sel < effects_len){
+				sel_effect = new_sel;
+				//color the lcd
+				color_lcd(effect_colors[sel_effect]);
+				//display name
+				lcd.clear();
+				lcd.setCursor(0,0);
+				//put name in center
+				int left_pad = (16 - strlen(effect_names[sel_effect])) / 2;
+				for(int i = 0; i < left_pad; i++){ lcd.print(" "); }
+				lcd.print(effect_names[sel_effect]);
+				//print button indicator
+				lcd.setCursor(0,1);
+				lcd.print("(+)  (edit)  (-)");
+			}
+			if(buttonPressed(BUTTON_CENTER)){
+				page = PAGE_EDIT;
+			}
+		}else{		//if we don't have effects
+			byte white[3] = {255, 255, 255};
+			color_lcd(white);
 			lcd.clear();
 			lcd.setCursor(0,0);
 			//put name in center
-			int left_pad = (16 - strlen(effect_names[sel_effect])) / 2;
+			char* empty_str = "No effects";
+			int left_pad = (16 - strlen(empty_str)) / 2;
 			for(int i = 0; i < left_pad; i++){ lcd.print(" "); }
-			lcd.print(effect_names[sel_effect]);
+			lcd.print(empty_str);
 			//print button indicator
 			lcd.setCursor(0,1);
-			lcd.print("(+)  (edit)  (-)");
+			lcd.print("(+)             ");
+			delay(20);		//to not overload the screen refreshing
 		}
 		if(buttonPressed(BUTTON_LEFT)){
 			page = PAGE_ADD;
@@ -231,9 +254,6 @@ void loop() {
 			serial_read_effects();
 			//reset selected
 			sel_effect = -1;
-		}
-		if(buttonPressed(BUTTON_CENTER)){
-			page = PAGE_EDIT;
 		}
 	}
 }
