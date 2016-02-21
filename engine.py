@@ -27,6 +27,7 @@ class AudioEngine(object):
 	audio_thread = None
 	def __init__(self, effects_path):
 		self.effects = []
+		self.running_effects = []
 		self.patches = []
 		self.running = True
 		effects_namespace = {}
@@ -61,11 +62,6 @@ class AudioEngine(object):
 		# get info
 		self.sample_rate = self.jack_client.get_sample_rate()
 		self.buffer_size = self.jack_client.get_buffer_size()
-		# --- set jackd info in each effect and run setup
-		for i in xrange(0, len(self.effects)):
-			self.effects[i].sample_rate = self.sample_rate
-			self.effects[i].buffer_size = self.buffer_size
-			self.effects[i].setup()
 		#start the audio thread
 		self.audio_thread = Thread(target = self.audio_thread_fn)
 		self.audio_thread.start()
@@ -95,7 +91,11 @@ class AudioEngine(object):
 		for to_add in effs:
 			ind = self.get_index(to_add)
 			#print "index for", to_add, ind
-			self.running_effects.append(self.effects[ind]())
+			new_eff = self.effects[ind]()
+			new_eff.sample_rate = self.sample_rate
+			new_eff.buffer_size = self.buffer_size
+			new_eff.setup()
+			self.running_effects.append(new_eff)
 	# i_ind / o_ind are length 2 tuples with the effect index and the port index
 	# effect index can also be replace with the string name
 	def add_patch(self, i_ind, o_ind):
@@ -116,6 +116,7 @@ class AudioEngine(object):
 				output_buffer= self.run()
 				#print sum(output_buffer)
 				self.jack_client.process(output_buffer, input_buffer)
+				time.sleep(0.005)
 		except IndexError as err:
 			#go through effects to see if one is missing a buffer
 			for e in self.effects:
@@ -126,8 +127,8 @@ class AudioEngine(object):
 	#run all effects, in any order, once and return the output buffer
 	def run(self):
 		output_buffer = numpy.zeros((1,self.buffer_size), 'f')
-		for x in xrange(0, len(self.effects)):
-			self.effects[x].process()
+		for x in xrange(0, len(self.running_effects)):
+			self.running_effects[x].process()
 			#print self.effects[x].outs
 		#transfer data across effects
 		#print "Patches", self.patches
@@ -136,11 +137,11 @@ class AudioEngine(object):
 				pass
 			else:					#input is an effect
 				#print "Patch", p[0][1], "effect", self.effects[p[0][0]].__class__.__name__
-				if len(self.effects[p[0][0]].outs) > p[0][1]:	#if we have something to output
+				if len(self.running_effects[p[0][0]].outs) > p[0][1]:	#if we have something to output
 					if p[1][0] < 0:		#ouput is global
-						output_buffer += self.effects[p[0][0]].outs[p[0][1]]
+						output_buffer += self.running_effects[p[0][0]].outs[p[0][1]]
 					else:				#output goes to another effect's input
-						if len(self.effects[p[1][0]].inps) > p[1][1]:	#don't bother unless the spot exists
-							self.effects[p[1][0]].inps[p[1][1]] = self.effects[p[0][0]].outs[p[0][1]]
+						if len(self.running_effects[p[1][0]].inps) > p[1][1]:	#don't bother unless the spot exists
+							self.running_effects[p[1][0]].inps[p[1][1]] = self.running_effects[p[0][0]].outs[p[0][1]]
 							#print "patch:", p[1][1], self.effects[p[1][0]].inps
 		return output_buffer
