@@ -92,10 +92,9 @@ class AudioEngine(object):
 		return possible_inds[0]
 	# add an array of effects to running_effects from available effects
 	def add_effect(self, effs):
-		print effs
 		for to_add in effs:
 			ind = self.get_index(to_add)
-			print "index for", to_add, ind
+			#print "index for", to_add, ind
 			self.running_effects.append(self.effects[ind]())
 	# i_ind / o_ind are length 2 tuples with the effect index and the port index
 	# effect index can also be replace with the string name
@@ -109,7 +108,7 @@ class AudioEngine(object):
 		self.patches.append((i_ind, o_ind))
 	#continually call run and process the i/o to the audio buffers
 	def audio_thread_fn(self):
-		print "Starting audio...."
+		#print "Starting audio...."
 		try:
 			while self.running:
 			#for x in xrange(0, 40):
@@ -123,7 +122,7 @@ class AudioEngine(object):
 				if len(e.outs) == 0:
 					print 'Effect "'+e.__class__.__name__+'" doesn\'t have an output_buffer'
 					return
-		print "Done audio"
+		#print "Done audio"
 	#run all effects, in any order, once and return the output buffer
 	def run(self):
 		output_buffer = numpy.zeros((1,self.buffer_size), 'f')

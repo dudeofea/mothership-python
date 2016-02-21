@@ -4,7 +4,7 @@
 #
 import time, uuid, bitarray, signal, numpy
 from engine import AudioEngine
-from controller import AudioController
+from controller import AudioController, ConsoleController
 
 # setup audio engine to run effects
 engine = AudioEngine('effects.py')
@@ -20,4 +20,9 @@ engine = AudioEngine('effects.py')
 # setup audio controller and pass it the engine
 controller = AudioController(engine)
 
-print engine.get_effects()
+# setup user console
+console = ConsoleController(engine)
+
+# clean up things
+controller.deactivate()
+engine.deactivate()

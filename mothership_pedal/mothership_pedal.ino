@@ -15,6 +15,8 @@ LiquidCrystal lcd(22, 23, 27, 26, 25, 24);
 #define PAGE_DEFAULT				0
 #define PAGE_EDIT					1
 #define PAGE_ADD					2
+#define PAGE_EDIT_COLOR				3
+#define PAGE_PATCH					4
 
 //pedal state variables
 int sel_effect = -1;
@@ -72,8 +74,8 @@ void serial_read_line(char* buf, int max_len){
 void serial_read_effects(){
 	//get length first (from hex value, max 255)
 	int mods = serial_read_char();
-	Serial.print("ECHO ");
-	Serial.println(mods);
+	// Serial.print("ECHO ");
+	// Serial.println(mods);
 	if(mods == 0){
 		effects_len = mods;
 		return;
@@ -87,7 +89,7 @@ void serial_read_effects(){
 		effect_names[i] = (char*)malloc(sizeof(char) * (LCD_WIDTH + 1));
 		memset(effect_names[i], 0, LCD_WIDTH+1);	//clear the buffer
 		serial_read_line(effect_names[i], LCD_WIDTH);
-		Serial.print("ECHO NAME "); Serial.println(effect_names[i]);
+		// Serial.print("ECHO NAME "); Serial.println(effect_names[i]);
 		i++;
 	}
 	//get effects colors
@@ -97,10 +99,10 @@ void serial_read_effects(){
 		for(int j = 0; j < 3; j++){
 			effect_colors[i][j] = serial_read_char();
 		}
-		Serial.print(F("ECHO COLOR "));
-		Serial.print(effect_colors[i][0], HEX);
-		Serial.print(effect_colors[i][1], HEX);
-		Serial.println(effect_colors[i][2], HEX);
+		// Serial.print(F("ECHO COLOR "));
+		// Serial.print(effect_colors[i][0], HEX);
+		// Serial.print(effect_colors[i][1], HEX);
+		// Serial.println(effect_colors[i][2], HEX);
 		i++;
 	}
 	effects_len = mods;
@@ -166,7 +168,7 @@ void loop() {
 		sendPotValues();
 		//show the screen
 		lcd.setCursor(0,1);
-		lcd.print("(#)  (back)     ");
+		lcd.print("(#)  (back)  (^)");
 		//poll buttons
 		if(buttonPressed(BUTTON_CENTER)){
 			page = PAGE_DEFAULT;
