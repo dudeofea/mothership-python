@@ -39,13 +39,12 @@ class AudioController(object):
 	def update(self, line):
 		spl = line.split(' ')
 		if spl[0] == "UPD":		#update the current module with given values
-			print line
 			mod = int(spl[1])
-			if mod < 0 or mod >= len(self.engine.effects):
+			if mod < 0 or mod >= len(self.engine.running_effects):
 				return
 			for x in xrange(2, len(spl)-1):
 				val = int(spl[x])
-				self.engine.effects[mod].args[x-2] = val
+				self.engine.running_effects[mod].args[x-2] = val
 		elif spl[0] == "LST":	#send a list of all modules we have
 			#send length
 			self.arduino.write(chr(len(self.engine.effects)))

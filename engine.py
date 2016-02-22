@@ -108,10 +108,9 @@ class AudioEngine(object):
 		self.patches.append((i_ind, o_ind))
 	#continually call run and process the i/o to the audio buffers
 	def audio_thread_fn(self):
-		#print "Starting audio...."
+		print "Starting audio...."
 		try:
 			while self.running:
-			#for x in xrange(0, 40):
 				input_buffer = numpy.zeros((1,self.buffer_size), 'f')
 				output_buffer= self.run()
 				#print sum(output_buffer)
@@ -123,7 +122,7 @@ class AudioEngine(object):
 				if len(e.outs) == 0:
 					print 'Effect "'+e.__class__.__name__+'" doesn\'t have an output_buffer'
 					return
-		#print "Done audio"
+		print "Done audio"
 	#run all effects, in any order, once and return the output buffer
 	def run(self):
 		output_buffer = numpy.zeros((1,self.buffer_size), 'f')
@@ -136,7 +135,7 @@ class AudioEngine(object):
 			if p[0][0] < 0:
 				pass
 			else:					#input is an effect
-				#print "Patch", p[0][1], "effect", self.effects[p[0][0]].__class__.__name__
+				#print "Patch", p[0][1], "effect", self.running_effects[p[0][0]].__class__.__name__
 				if len(self.running_effects[p[0][0]].outs) > p[0][1]:	#if we have something to output
 					if p[1][0] < 0:		#ouput is global
 						output_buffer += self.running_effects[p[0][0]].outs[p[0][1]]
