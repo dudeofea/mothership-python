@@ -106,6 +106,9 @@ class AudioEngine(object):
 		if type(o_ind[0]) == str:
 			o_ind = (self.get_running_index(o_ind[0]), o_ind[1])
 		self.patches.append((i_ind, o_ind))
+	def del_patch(self, ind):
+		if ind >= 0 and ind < len(self.patches):
+			del self.patches[ind]
 	#continually call run and process the i/o to the audio buffers
 	def audio_thread_fn(self):
 		print "Starting audio...."

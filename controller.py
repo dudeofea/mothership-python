@@ -90,6 +90,9 @@ class ConsoleController(object):
 				i = cmd[1].split(',')
 				o = cmd[2].split(',')
 				self.engine.add_patch((int(i[0]), int(i[1])), (int(o[0]), int(o[1])))
+			elif cmd[0] == "unpatch" and len(cmd) == 2:
+				ind = int(cmd[1])
+				self.engine.del_patch(ind)
 			elif cmd[0] == "patches":
 				for p in self.engine.patches:
 					print p
