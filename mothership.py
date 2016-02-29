@@ -16,7 +16,6 @@ signal.signal(signal.SIGINT, sigint_handler)
 # setup audio engine to run effects
 engine = AudioEngine('effects.py')
 engine.activate()
-engine.add_effect(['sequencer', 'sawtooth_wave', 'square_wave', 'enveloper'])
 
 # setup audio controller and pass it the engine
 controller = AudioController(engine)
