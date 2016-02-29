@@ -3,6 +3,7 @@
 #	processes inputs (from effects / global input) and outputs (same)
 #
 import sys, inspect, time, numpy, jack
+from multiprocessing import Process
 from threading import Thread
 
 #effect class to override
@@ -134,10 +135,17 @@ class AudioEngine(object):
 		print "Done audio"
 	#run all effects, in any order, once and return the output buffer
 	def run(self):
-		output_buffer = numpy.zeros((1,self.buffer_size), 'f')
+		#run all effects at once, just once
+		ps = []
 		for x in xrange(0, len(self.running_effects)):
 			self.running_effects[x].process()
-			#print self.effects[x].outs
+			ps.append(Process(target=self.running_effects[x].process))
+		for p in ps:
+			p.start()
+		for p in ps:
+			p.join()
+		#clear our output buffer
+		output_buffer = numpy.zeros((1,self.buffer_size), 'f')
 		#transfer data across effects
 		#print "Patches", self.patches
 		for p in self.patches:
