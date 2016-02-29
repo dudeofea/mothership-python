@@ -9,25 +9,30 @@ from engine import AudioEngine
 from threading import Thread
 
 class AudioController(object):
+	running = False
 	def __init__(self, engine):
 		self.engine = engine
 		#start the serial listener thread
+		self.running = True
 		self.serial_thread = Thread(target = self.serial_thread_fn)
 		self.serial_thread.start()
 	def deactivate(self):
-		self.serial_thread.kill()
+		self.running = False
+		self.serial_thread.join()
 	def serial_thread_fn(self):
 		#get first ttyACM* serial port
 		serial_port = '/dev/ttyACM0'
 		for l in os.listdir('/dev/'):
 			if l.startswith('ttyACM'):
 				serial_port = '/dev/' + l
-		with serial.Serial(serial_port, 115200) as arduino:
+		with serial.Serial(serial_port, baudrate=115200, timeout=0) as arduino:
 			buf = ""
 			self.arduino = arduino
-			while 1:
+			while self.running:
 				chars = self.arduino.readline()
 				buf += chars
+				if len(buf) == 0:
+					continue
 				while 1:
 					try:
 						i = buf.index('\n')
@@ -36,6 +41,7 @@ class AudioController(object):
 						self.update(line.replace('\r', ''))
 					except ValueError:
 						break
+		print "quitting serial"
 	#process input line and possibly respond or update engine
 	def update(self, line):
 		spl = line.split(' ')

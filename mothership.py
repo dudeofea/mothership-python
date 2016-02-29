@@ -24,5 +24,6 @@ controller = AudioController(engine)
 # setup user console
 console = ConsoleController(engine)
 
-# wait for a signal
-signal.pause()
+# quit
+engine.deactivate()
+controller.deactivate()
