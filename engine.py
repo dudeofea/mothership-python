@@ -25,11 +25,17 @@ class AudioEngine(object):
 	jack_client = None
 	JACK_GLOBAL = (-1, 0)	#global input / output port
 	audio_thread = None
+	sample_rate = 0
+	buffer_size = 0
+	effects_path = ""
 	def __init__(self, effects_path):
+		self.init_engine(effects_path)
+	def init_engine(self, effects_path):
 		self.effects = []
 		self.running_effects = []
 		self.patches = []
 		self.running = True
+		self.effects_path = effects_path
 		effects_namespace = {}
 		execfile(effects_path, effects_namespace)
 		# --- add the effects to ourselves
@@ -118,7 +124,7 @@ class AudioEngine(object):
 				output_buffer= self.run()
 				#print sum(output_buffer)
 				self.jack_client.process(output_buffer, input_buffer)
-				time.sleep(0.005)
+				time.sleep(0.001)
 		except IndexError as err:
 			#go through effects to see if one is missing a buffer
 			for e in self.effects:
