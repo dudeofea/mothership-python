@@ -10,6 +10,8 @@ from threading import Thread
 
 class AudioController(object):
 	running = False
+	last_vals = [0]*10
+	tracking = -1
 	def __init__(self, engine):
 		self.engine = engine
 		#start the serial listener thread
@@ -49,9 +51,19 @@ class AudioController(object):
 			mod = int(spl[1])
 			if mod < 0 or mod >= len(self.engine.running_effects):
 				return
+			max_diff = 5
+			resps = []
 			for x in xrange(2, len(spl)-1):
 				val = int(spl[x])
-				self.engine.running_effects[mod].args[x-2] = val
+				resp = self.engine.running_effects[mod].on_arg_change(x-2, val)
+				resps.append(resp)
+				diff = abs(val-self.last_vals[x-2])
+				if diff > max_diff:
+					max_diff = diff
+					self.last_vals[x-2] = val
+					self.tracking = x-2
+			if self.tracking >= 0:
+				self.arduino.write(resps[self.tracking]+'\n')
 		elif spl[0] == "LST":	#send a list of all modules we have
 			#send length
 			self.arduino.write(chr(len(self.engine.effects)))

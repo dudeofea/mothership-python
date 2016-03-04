@@ -69,6 +69,9 @@ void serial_read_line(char* buf, int max_len){
 		buf[ind++] = val;
 		val = serial_read_char();
 	}
+	for(int i = ind; i < max_len; i++){
+		buf[i] = 0;
+	}
 }
 //reads in a list of effects info
 void serial_read_effects(){
@@ -124,6 +127,7 @@ void print_array(char *arr, int arr_len){
 }
 //send all potentiometer values in 10 * 10 = 100 bits
 void sendPotValues(){
+	static int lcd_timeout = 10;
 	//send the pots we're tracking
 	char buf[3];
 	Serial.print("UPD ");
@@ -134,6 +138,19 @@ void sendPotValues(){
 		Serial.print(" ");
 	}
 	Serial.print("\n");
+	//get back the response string, print if not empty
+	char resp[17];
+	serial_read_line(resp, 16);
+	if(strlen(resp) > 0 && lcd_timeout < 0){
+		lcd.clear();
+		lcd.setCursor(0,0);
+		//put name in center
+		int left_pad = (16 - strlen(resp)) / 2;
+		for(int i = 0; i < left_pad; i++){ lcd.print(" "); }
+		lcd.print(resp);
+		lcd_timeout = 10;
+	}
+	lcd_timeout--;
 }
 //returns which button was pressed (as in the MACRO), on release
 byte buttonPressed(int button){

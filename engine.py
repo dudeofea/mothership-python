@@ -17,6 +17,9 @@ class Effect(object):
 		pass
 	def process(self):
 		pass
+	def on_arg_change(self, ind, new_val):
+		self.args[ind] = new_val
+		return str(ind)+": "+str(new_val)
 
 class AudioEngine(object):
 	effects = []			#all effects to choose from
@@ -125,7 +128,7 @@ class AudioEngine(object):
 				output_buffer= self.run()
 				#print sum(output_buffer)
 				self.jack_client.process(output_buffer, input_buffer)
-				time.sleep(0.001)
+				time.sleep(0.0001)
 		except IndexError as err:
 			#go through effects to see if one is missing a buffer
 			for e in self.effects:
