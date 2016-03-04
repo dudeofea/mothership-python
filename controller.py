@@ -62,8 +62,10 @@ class AudioController(object):
 					max_diff = diff
 					self.last_vals[x-2] = val
 					self.tracking = x-2
-			if self.tracking >= 0:
+			if self.tracking >= 0 and resps[self.tracking] != None:
 				self.arduino.write(resps[self.tracking]+'\n')
+			else:
+				self.arduino.write('\n')
 		elif spl[0] == "LST":	#send a list of all modules we have
 			#send length
 			self.arduino.write(chr(len(self.engine.effects)))

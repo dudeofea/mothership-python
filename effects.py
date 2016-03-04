@@ -33,6 +33,10 @@ class square_wave(Effect):
 		self.ind -= self.buffer_size
 		self.end_ind -= self.buffer_size
 		self.inps = [0]
+	def on_arg_change(self, ind, new_val):
+		if ind == 0:
+			self.args[ind] = float(new_val) / 10
+			return str(self.args[ind])+"Hz"
 
 # classic sawtooth wave effect
 class sawtooth_wave(Effect):
@@ -67,6 +71,10 @@ class sawtooth_wave(Effect):
 		self.ind -= self.buffer_size
 		self.end_ind -= self.buffer_size
 		self.inps = [0]
+	def on_arg_change(self, ind, new_val):
+		if ind == 0:
+			self.args[ind] = float(new_val) / 10
+			return str(self.args[ind])+"Hz"
 
 class sine_wave(Effect):
 	color = '#0000FF'
