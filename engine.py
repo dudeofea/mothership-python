@@ -132,7 +132,7 @@ class AudioEngine(object):
 				self.running_time = end - start
 				#print sum(output_buffer)
 				self.jack_client.process(output_buffer, input_buffer)
-				time.sleep(0.0001)
+				time.sleep(0.001)
 		except IndexError as err:
 			#go through effects to see if one is missing a buffer
 			for e in self.effects:
