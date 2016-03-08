@@ -31,6 +31,7 @@ class AudioEngine(object):
 	audio_thread = None
 	sample_rate = 0
 	buffer_size = 0
+	running_time = 0
 	effects_path = ""
 	def __init__(self, effects_path):
 		self.init_engine(effects_path)
@@ -129,7 +130,7 @@ class AudioEngine(object):
 				input_buffer = self.zero_buffer
 				output_buffer= self.run()
 				end = time.time()
-				print "Process:", end - start
+				self.running_time = end - start
 				#print sum(output_buffer)
 				self.jack_client.process(output_buffer, input_buffer)
 				time.sleep(0.0001)
@@ -139,6 +140,9 @@ class AudioEngine(object):
 				if len(e.outs) == 0:
 					print 'Effect "'+e.__class__.__name__+'" doesn\'t have an output_buffer'
 					return
+		except jack.InputSyncError:
+			print "Too Much CPU Load"
+			self.running = False
 		print "Done audio"
 	#run all effects, in any order, once and return the output buffer
 	def run(self):
