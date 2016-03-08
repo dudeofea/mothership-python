@@ -150,11 +150,6 @@ class AudioEngine(object):
 		ps = []
 		for x in xrange(0, len(self.running_effects)):
 			self.running_effects[x].process()
-			ps.append(Process(target=self.running_effects[x].process))
-		for p in ps:
-			p.start()
-		for p in ps:
-			p.join()
 		#clear our output buffer
 		output_buffer = self.zero_buffer
 		#transfer data across effects

@@ -10,7 +10,7 @@ engine.activate()
 
 while engine.running:
 	try:
-		engine.add_effect(['blank'])
+		engine.add_effect(['square_wave'])
 	except InputSyncError:
 		break
 	print len(engine.running_effects), engine.running_time
