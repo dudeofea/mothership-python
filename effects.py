@@ -4,6 +4,13 @@
 import numpy
 from engine import Effect
 
+class blank(Effect):
+	color = '#FFFFFF'
+	def setup(self):
+		self.inps = [numpy.zeros((1, self.buffer_size), 'f')]
+	def process(self):
+		self.outs = [numpy.zeros((1, self.buffer_size), 'f')]
+
 # classic square wave effect
 class square_wave(Effect):
 	color = '#FF0000'

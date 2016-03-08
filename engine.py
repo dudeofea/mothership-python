@@ -40,10 +40,10 @@ class AudioEngine(object):
 		self.patches = []
 		self.running = True
 		self.effects_path = effects_path
-		effects_namespace = {}
-		execfile(effects_path, effects_namespace)
+		effects_namespace = __import__(effects_path)
 		# --- add the effects to ourselves
-		for name, obj in effects_namespace.iteritems():
+		for name in dir(effects_namespace):
+			obj = effects_namespace.__dict__.get(name)
 			#find all items that are classes and have Effect as subclass
 			if inspect.isclass(obj) and obj.__bases__[0].__name__ == 'Effect':
 				self.effects.append(obj)
@@ -72,6 +72,7 @@ class AudioEngine(object):
 		# get info
 		self.sample_rate = self.jack_client.get_sample_rate()
 		self.buffer_size = self.jack_client.get_buffer_size()
+		self.zero_buffer = numpy.zeros((1,self.buffer_size), 'f')
 		#start the audio thread
 		self.audio_thread = Thread(target = self.audio_thread_fn)
 		self.audio_thread.start()
@@ -124,8 +125,11 @@ class AudioEngine(object):
 		print "Starting audio...."
 		try:
 			while self.running:
-				input_buffer = numpy.zeros((1,self.buffer_size), 'f')
+				start = time.time()
+				input_buffer = self.zero_buffer
 				output_buffer= self.run()
+				end = time.time()
+				print "Process:", end - start
 				#print sum(output_buffer)
 				self.jack_client.process(output_buffer, input_buffer)
 				time.sleep(0.0001)
@@ -148,7 +152,7 @@ class AudioEngine(object):
 		for p in ps:
 			p.join()
 		#clear our output buffer
-		output_buffer = numpy.zeros((1,self.buffer_size), 'f')
+		output_buffer = self.zero_buffer
 		#transfer data across effects
 		#print "Patches", self.patches
 		for p in self.patches:

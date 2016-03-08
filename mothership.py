@@ -14,7 +14,7 @@ def sigint_handler(signal, frame):
 signal.signal(signal.SIGINT, sigint_handler)
 
 # setup audio engine to run effects
-engine = AudioEngine('effects.py')
+engine = AudioEngine('effects')
 engine.activate()
 
 # setup audio controller and pass it the engine
