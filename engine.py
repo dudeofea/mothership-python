@@ -73,7 +73,6 @@ class AudioEngine(object):
 		# get info
 		self.sample_rate = self.jack_client.get_sample_rate()
 		self.buffer_size = self.jack_client.get_buffer_size()
-		self.zero_buffer = numpy.zeros((1,self.buffer_size), 'f')
 		#start the audio thread
 		self.audio_thread = Thread(target = self.audio_thread_fn)
 		self.audio_thread.start()
@@ -127,7 +126,7 @@ class AudioEngine(object):
 		try:
 			while self.running:
 				start = time.time()
-				input_buffer = self.zero_buffer
+				input_buffer = numpy.zeros((1,self.buffer_size), 'f')
 				output_buffer= self.run()
 				end = time.time()
 				self.running_time = end - start
@@ -151,7 +150,7 @@ class AudioEngine(object):
 		for x in xrange(0, len(self.running_effects)):
 			self.running_effects[x].process()
 		#clear our output buffer
-		output_buffer = self.zero_buffer
+		output_buffer = numpy.zeros((1,self.buffer_size), 'f')
 		#transfer data across effects
 		#print "Patches", self.patches
 		for p in self.patches:
