@@ -43,7 +43,7 @@ class AudioController(object):
 						self.update(line.replace('\r', ''))
 					except ValueError:
 						break
-		print "quitting serial"
+		#print "quitting serial"
 	#process input line and possibly respond or update engine
 	def update(self, line):
 		spl = line.split(' ')

@@ -4,13 +4,6 @@
 import numpy
 from engine import Effect
 
-class blank(Effect):
-	color = '#FFFFFF'
-	def setup(self):
-		self.inps = [numpy.zeros((1, self.buffer_size), 'f')]
-	def process(self):
-		self.outs = [numpy.zeros((1, self.buffer_size), 'f')]
-
 # classic square wave effect
 class square_wave(Effect):
 	color = '#FF0000'
@@ -112,20 +105,17 @@ class enveloper(Effect):
 #takes a waveform and an envelope and returns an enveloped waveform
 class sequencer(Effect):
 	color = '#005500'
-	seq = [987.77, 1318.51, 1174.66]
 	ind = 0
+	seq_len = 8
 	cnt = 0
 	period = 2
-	def setup(self):
-		#set swing offset to 0
-		self.inps = [0]
 	def process(self):
-		self.outs = [self.seq[self.ind]]
+		self.outs = [self.args[self.ind]]
 		self.cnt += 1
 		if self.cnt > self.period:
 			self.cnt -= self.period
 			self.ind += 1
-			if self.ind >= len(self.seq):
+			if self.ind >= self.seq_len:
 				self.ind = 0
 
 #spits out random noise

@@ -116,7 +116,7 @@ class TestEngine(unittest.TestCase):
 			self.engine.effects[x].buffer_size, self.engine.effects[x].inps, self.engine.effects[x].sample_rate = self.engine.buffer_size, [2], self.engine.sample_rate
 			self.engine.effects[x].setup()
 		#run the engine once
-		self.engine.add_patch((0,0), self.engine.JACK_GLOBAL)
+		self.engine.add_patch(('square_wave',0), self.engine.JACK_GLOBAL)
 		out = self.engine.run()
 		ans = numpy.array([1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0], 'f')
 		self.assertEquals(list(out[0]), list(ans))
@@ -134,6 +134,18 @@ class TestEngine(unittest.TestCase):
 		self.engine.run()
 		out = self.engine.run()
 		ans = numpy.array([0,0.25,0.5,0.75,1,0,0,0,0,0,0,0.25,0.5,0.75,1,0,0,0,0,0], 'f')
+		self.assertEquals(list(out[0]), list(ans))
+	#test that patching 2 modules to global output adds them
+	def test_patch_output3(self):
+		#set the hardware info ourselves
+		self.engine.buffer_size, self.engine.sample_rate = 20, 20
+		for x in xrange(0, len(self.engine.effects)):
+			self.engine.effects[x].buffer_size, self.engine.effects[x].inps, self.engine.effects[x].sample_rate = self.engine.buffer_size, [2], self.engine.sample_rate
+			self.engine.effects[x].setup()
+		#run the engine once
+		self.engine.add_patch(('saw_wave',0), self.engine.JACK_GLOBAL)
+		out = self.engine.run()
+		ans = numpy.array([1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0], 'f')
 		self.assertEquals(list(out[0]), list(ans))
 
 if __name__ == '__main__':
