@@ -172,3 +172,5 @@ class AudioEngine(object):
 						if len(self.running_effects[p[1][0]].inps) > p[1][1]:	#don't bother unless the spot exists
 							self.running_effects[p[1][0]].inps[p[1][1]] = self.running_effects[p[0][0]].outs[p[0][1]]
 							#print "patch:", p[1][1], self.effects[p[1][0]].inps
+		#make sure the output buffer is float32
+		self.output_buffer = self.output_buffer.astype('f')
