@@ -13,7 +13,7 @@ class square_wave(Effect):
 		#set inputs for running
 		self.inps = [0]
 	def process(self):
-		if self.inps[0] == 0:
+		if self.inps[0] == 0 and len(self.args) >= 1:
 			self.inps[0] = self.args[0]
 		if self.inps[0] == 0:
 			return
@@ -32,7 +32,6 @@ class square_wave(Effect):
 				self.end_ind += 2 * interval
 		self.ind -= self.buffer_size
 		self.end_ind -= self.buffer_size
-		self.inps = [0]
 	def on_arg_change(self, ind, new_val):
 		if ind == 0:
 			self.args[ind] = float(new_val) / 10
@@ -70,7 +69,6 @@ class sawtooth_wave(Effect):
 				self.end_ind += interval
 		self.ind -= self.buffer_size
 		self.end_ind -= self.buffer_size
-		self.inps = [0]
 	def on_arg_change(self, ind, new_val):
 		if ind == 0:
 			self.args[ind] = float(new_val) / 10

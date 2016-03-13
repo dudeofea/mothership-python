@@ -100,11 +100,11 @@ class TestEffects(unittest.TestCase):
 
 class TestEngine(unittest.TestCase):
 	def setUp(self):
-		self.engine = AudioEngine('effects.py')
+		self.engine = AudioEngine('effects')
 	#test that all effects are listed
 	def test_list_effects(self):
 		ans = ['square_wave', 'sawtooth_wave', 'enveloper']
-		effs= [e.__class__.__name__ for e in self.engine.get_effects()]
+		effs= [e.__name__ for e in self.engine.get_effects()]
 		contains_all = True
 		for a in ans:
 			self.assertTrue(effs.index(a) >= 0)
@@ -112,41 +112,46 @@ class TestEngine(unittest.TestCase):
 	def test_patch_output1(self):
 		#set the hardware info ourselves
 		self.engine.buffer_size, self.engine.sample_rate = 20, 20
-		for x in xrange(0, len(self.engine.effects)):
-			self.engine.effects[x].buffer_size, self.engine.effects[x].inps, self.engine.effects[x].sample_rate = self.engine.buffer_size, [2], self.engine.sample_rate
-			self.engine.effects[x].setup()
+		#add the effects
+		self.engine.add_effect(['square_wave', 'sawtooth_wave', 'enveloper'])
+		self.engine.running_effects[0].inps = [2]
+		self.engine.running_effects[1].inps = [2]
 		#run the engine once
 		self.engine.add_patch(('square_wave',0), self.engine.JACK_GLOBAL)
-		out = self.engine.run()
+		self.engine.run()
 		ans = numpy.array([1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0], 'f')
-		self.assertEquals(list(out[0]), list(ans))
+		self.assertEquals(list(self.engine.output_buffer[0]), list(ans))
 	#test that patching square_wave / sawtooth_wave to enveloper works
 	def test_patch_output2(self):
 		#set the hardware info ourselves
 		self.engine.buffer_size, self.engine.sample_rate = 20, 20
-		for x in xrange(0, len(self.engine.effects)):
-			self.engine.effects[x].buffer_size, self.engine.effects[x].inps, self.engine.effects[x].sample_rate = self.engine.buffer_size, [2], self.engine.sample_rate
-			self.engine.effects[x].setup()
+		#add the effects
+		self.engine.add_effect(['square_wave', 'sawtooth_wave', 'enveloper'])
+		self.engine.running_effects[0].inps = [2]
+		self.engine.running_effects[1].inps = [2]
 		#run the engine once
 		self.engine.add_patch(('square_wave',0), ('enveloper', 0))
 		self.engine.add_patch(('sawtooth_wave',0), ('enveloper', 1))
 		self.engine.add_patch(('enveloper',0), self.engine.JACK_GLOBAL)
 		self.engine.run()
-		out = self.engine.run()
+		self.engine.run()
 		ans = numpy.array([0,0.25,0.5,0.75,1,0,0,0,0,0,0,0.25,0.5,0.75,1,0,0,0,0,0], 'f')
-		self.assertEquals(list(out[0]), list(ans))
+		self.assertEquals(list(self.engine.output_buffer[0]), list(ans))
 	#test that patching 2 modules to global output adds them
 	def test_patch_output3(self):
 		#set the hardware info ourselves
 		self.engine.buffer_size, self.engine.sample_rate = 20, 20
-		for x in xrange(0, len(self.engine.effects)):
-			self.engine.effects[x].buffer_size, self.engine.effects[x].inps, self.engine.effects[x].sample_rate = self.engine.buffer_size, [2], self.engine.sample_rate
-			self.engine.effects[x].setup()
+		#add the effects
+		self.engine.add_effect(['square_wave', 'sawtooth_wave'])
+		self.engine.running_effects[0].inps = [1]
+		self.engine.running_effects[1].inps = [2]
 		#run the engine once
-		self.engine.add_patch(('saw_wave',0), self.engine.JACK_GLOBAL)
-		out = self.engine.run()
-		ans = numpy.array([1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0], 'f')
-		self.assertEquals(list(out[0]), list(ans))
+		self.engine.add_patch(('square_wave',0), self.engine.JACK_GLOBAL)
+		self.engine.add_patch(('sawtooth_wave',0), self.engine.JACK_GLOBAL)
+		self.engine.run()
+		ans = numpy.array([1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9,
+						   0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], 'f')
+		self.assertEquals(list(self.engine.output_buffer[0]), list(ans))
 
 if __name__ == '__main__':
 	unittest.main()
