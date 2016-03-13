@@ -4,7 +4,7 @@
 #	Uses a seria monitor to read data from mothership arduino
 #	pedal and select modules / edit their arguments
 #
-import sys, serial, os, json
+import sys, serial, os
 from engine import AudioEngine
 from threading import Thread
 
@@ -118,30 +118,9 @@ class ConsoleController(object):
 				for p in self.engine.patches:
 					print p
 			elif cmd[0] == "save" and len(cmd) == 2:
-				effs = []
-				for e in self.engine.running_effects:
-					effs.append({
-						'name': e.__class__.__name__,		#name of the effect
-						'args':	e.args
-					})
-				save_object = {
-					'load_file': self.engine.effects_path,
-					'running_effects': effs,
-					'patches': self.engine.patches
-				}
-				with open(cmd[1]+'.json', 'w') as outfile:
-					json.dump(save_object, outfile)
+				self.engine.save(cmd[1])
 			elif cmd[0] == "load" and len(cmd) == 2:
-				path = cmd[1] + '.json'
-				if not os.path.exists(path):
-					continue
-				with open(cmd[1]+'.json', 'r') as infile:
-					save_object = json.load(infile)
-				self.engine.init_engine(save_object['load_file'])
-				for e in save_object['running_effects']:
-					self.engine.add_effect([e['name']])
-					self.engine.running_effects[-1].args = e['args']
-				self.engine.patches = save_object['patches']
+				self.engine.load(cmd[1])
 			elif cmd[0] == "quit":
 				return
 			else:

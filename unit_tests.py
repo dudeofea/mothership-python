@@ -4,7 +4,7 @@
 #
 #	Uses a file of fake effects called "test_effects.py"
 #
-import unittest
+import unittest, time
 from effects import *
 from engine import *
 
@@ -113,9 +113,8 @@ class TestEngine(unittest.TestCase):
 		#set the hardware info ourselves
 		self.engine.buffer_size, self.engine.sample_rate = 20, 20
 		#add the effects
-		self.engine.add_effect(['square_wave', 'sawtooth_wave', 'enveloper'])
+		self.engine.add_effect(['square_wave'])
 		self.engine.running_effects[0].inps = [2]
-		self.engine.running_effects[1].inps = [2]
 		#run the engine once
 		self.engine.add_patch(('square_wave',0), self.engine.JACK_GLOBAL)
 		self.engine.run()

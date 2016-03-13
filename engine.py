@@ -2,7 +2,7 @@
 #	Mothership audio engine, runs all effects (in the order added) and
 #	processes inputs (from effects / global input) and outputs (same)
 #
-import sys, inspect, time, numpy, jack, datetime, os
+import sys, inspect, time, numpy, jack, datetime, os, json
 from multiprocessing import Process
 from threading import Thread
 
@@ -10,13 +10,16 @@ from threading import Thread
 class Effect(object):
 	color = None
 	color_raw = [255, 255, 255]
-	args = []
-	inps = []
-	outs = []
+	args = []	#non patchable input
+	inps = []	#patchable inputs
+	outs = []	#patchable outputs
+	#runs once when creating the effect
 	def setup(self):
 		pass
+	#runs once per loop with all other effects, not based on dependencies
 	def process(self):
 		pass
+	#runs when an arg is changed, returns a human readable string regarding argument
 	def on_arg_change(self, ind, new_val):
 		self.args[ind] = new_val
 		return str(ind)+": "+str(new_val)
@@ -174,3 +177,30 @@ class AudioEngine(object):
 							#print "patch:", p[1][1], self.effects[p[1][0]].inps
 		#make sure the output buffer is float32
 		self.output_buffer = self.output_buffer.astype('f')
+	#save current state to a file
+	def save(self, name):
+		effs = []
+		for e in self.running_effects:
+			effs.append({
+				'name': e.__class__.__name__,		#name of the effect
+				'args':	e.args
+			})
+		save_object = {
+			'load_file': self.effects_path,
+			'running_effects': effs,
+			'patches': self.patches
+		}
+		with open(name+'.json', 'w') as outfile:
+			json.dump(save_object, outfile)
+	#load current state from a file
+	def load(self, name):
+		path = name + '.json'
+		if not os.path.exists(path):
+			return
+		with open(path, 'r') as infile:
+			save_object = json.load(infile)
+		self.init_engine(save_object['load_file'])
+		for e in save_object['running_effects']:
+			self.add_effect([e['name']])
+			self.running_effects[-1].args = e['args']
+		self.patches = save_object['patches']

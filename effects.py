@@ -13,11 +13,12 @@ class square_wave(Effect):
 		#set inputs for running
 		self.inps = [0]
 	def process(self):
-		if self.inps[0] == 0 and len(self.args) >= 1:
-			self.inps[0] = self.args[0]
-		if self.inps[0] == 0:
+		freq = self.inps[0]
+		if freq == 0 and len(self.args) >= 1:
+			freq = self.args[0]
+		if freq == 0:
 			return
-		interval = float(self.sample_rate) / (self.inps[0]*2)		#the length of the plateaus and valleys
+		interval = float(self.sample_rate) / (freq*2)		#the length of the plateaus and valleys
 		if self.end_ind == 0:
 			self.end_ind += interval
 		#print "End index", self.end_ind
@@ -48,11 +49,12 @@ class sawtooth_wave(Effect):
 		#set inputs for running
 		self.inps = [0]
 	def process(self):
-		if self.inps[0] == 0:
-			self.inps[0] = self.args[0]
-		if self.inps[0] == 0:
+		freq = self.inps[0]
+		if freq == 0 and len(self.args) >= 1:
+			freq = self.args[0]
+		if freq == 0:
 			return
-		interval = float(self.sample_rate) / (self.inps[0])		#the length of the plateaus and valleys
+		interval = float(self.sample_rate) / (freq)		#the length of the plateaus and valleys
 		self.slope = 1 / interval
 		if self.end_ind == 0:
 			self.end_ind += interval
