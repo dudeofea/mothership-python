@@ -2,7 +2,7 @@
 #	Mothership audio engine, runs all effects (in the order added) and
 #	processes inputs (from effects / global input) and outputs (same)
 #
-import sys, inspect, time, numpy, jack, datetime, os, json
+import sys, inspect, time, numpy, jack, datetime, os, json, traceback
 from multiprocessing import Process
 from threading import Thread
 
@@ -150,7 +150,8 @@ class AudioEngine(object):
 			#go through effects to see if one is missing a buffer
 			for e in self.effects:
 				if len(e.outs) == 0:
-					print 'Effect "'+e.__class__.__name__+'" doesn\'t have an output_buffer'
+					print 'Effect "'+e.__name__+'" doesn\'t have an output_buffer'
+					traceback.print_exc()
 					return
 		#print "Done audio"
 	#run all effects, in any order, once and return the output buffer

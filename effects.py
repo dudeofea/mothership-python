@@ -4,6 +4,19 @@
 import numpy
 from engine import Effect
 
+# helper function to turn freq. to note
+def freq2note(freq):
+	#0th octave notes
+	notes = [('C', 16.35), ('Db', 17.32), ('D', 18.35), ('Eb', 19.45), ('E', 20.60), ('F', 21.83), ('Gb', 23.12), ('G', 24.50), ('Ab', 25.96), ('A', 27.50), ('B', 30.87)]
+	octave_mul = 1
+	octave = 0
+	for x in xrange(0, 10):
+		for n in notes:
+			if freq < octave_mul*n[1]:
+				return (n[0]+str(octave), octave_mul*n[1])
+		octave_mul *= 2
+		octave += 1
+
 # classic square wave effect
 class square_wave(Effect):
 	color = '#FF0000'
@@ -108,15 +121,32 @@ class sequencer(Effect):
 	ind = 0
 	seq_len = 8
 	cnt = 0
-	period = 2
+	def setup(self):
+		self.inps = [0]
 	def process(self):
+		#takes default BPM from input, followed by arg #8
+		bpm = self.inps[0]
+		if bpm == 0:
+			bpm = self.args[8]
+		if bpm == 0:
+			return
+		period = 60 / (bpm)
 		self.outs = [self.args[self.ind]]
 		self.cnt += 1
-		if self.cnt > self.period:
-			self.cnt -= self.period
+		if self.cnt > period:
+			self.cnt -= period
 			self.ind += 1
 			if self.ind >= self.seq_len:
 				self.ind = 0
+	def on_arg_change(self, ind, new_val):
+		if ind < 8:
+			note = freq2note(float(new_val) / 5)
+			self.args[ind] = note[1]
+			return "Beat "+str(ind+1)+": "+note[0]
+		elif ind == 8:
+			self.args[ind] = float(new_val) / 5
+			return "BPM: "+str(self.args[ind])
+		return super(sequencer, self).on_arg_change(ind, new_val)
 
 #spits out random noise
 class white_noise(Effect):
