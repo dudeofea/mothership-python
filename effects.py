@@ -2,6 +2,7 @@
 #	as an input when starting up (you can specify another file if you'd like)
 
 import numpy
+from scipy import signal
 from engine import Effect
 
 # helper function to turn freq. to note
@@ -19,7 +20,7 @@ def freq2note(freq):
 
 # classic square wave effect
 class square_wave(Effect):
-	color = '#FF0000'
+	color = '#EB4B98'
 	ind = 0		#index to count with
 	end_ind = 0	#index to count to
 	def setup(self):
@@ -53,7 +54,7 @@ class square_wave(Effect):
 
 # classic sawtooth wave effect
 class sawtooth_wave(Effect):
-	color = '#00FF00'
+	color = '#02394A'
 	slope_val = 0	#current value of the slope
 	slope = 0		#how much to increment slope val
 	ind = 0			#index to count with
@@ -90,7 +91,7 @@ class sawtooth_wave(Effect):
 			return str(self.args[ind])+"Hz"
 
 class sine_wave(Effect):
-	color = '#0000FF'
+	color = '#043565'
 	ind = 0			#index to count with
 	end_ind = 0		#index to count to
 	def setup(self):
@@ -103,7 +104,7 @@ class sine_wave(Effect):
 
 #takes a waveform and an envelope and returns an enveloped waveform
 class enveloper(Effect):
-	color = '#550000'
+	color = '#5158BB'
 	def setup(self):
 		#set inputs for running
 		self.inps = [numpy.zeros((1, self.buffer_size), 'f')] * 2
@@ -117,7 +118,7 @@ class enveloper(Effect):
 
 #takes a waveform and an envelope and returns an enveloped waveform
 class sequencer(Effect):
-	color = '#005500'
+	color = '#F26DF9'
 	ind = 0
 	seq_len = 8
 	cnt = 0
@@ -147,6 +148,16 @@ class sequencer(Effect):
 			self.args[ind] = float(new_val) / 5
 			return "BPM: "+str(self.args[ind])
 		return super(sequencer, self).on_arg_change(ind, new_val)
+
+#a multi-pole low pass filter
+class low_pass(Effect):
+	color = '#824C71'
+	def setup(self):
+		self.inps = [numpy.zeros((1, self.buffer_size), 'f')]
+	def process(self):
+		a = [1]				#a vector for y's
+		b = [float(self.args[0]) / 1024]	#b vector for x's
+		self.outs = [signal.lfilter(b, a, self.inps[0])]
 
 #spits out random noise
 class white_noise(Effect):
