@@ -159,6 +159,9 @@ class low_pass(Effect):
 		b = [float(self.args[0]) / 1024]	#b vector for x's
 		self.outs = [signal.lfilter(b, a, self.inps[0])]
 
+#TODO: beat generator
+#TODO: chordifier
+
 #spits out random noise
 class white_noise(Effect):
 	color = '#000055'

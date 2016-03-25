@@ -25,6 +25,9 @@ char **effect_names = NULL;	 	//array of strings, names of effects
 byte **effect_colors = NULL;	//array of 3-tuple bytes for colors
 int pots[10];					//potentiometer values
 
+//remap analog inputs for buttons because broken pin
+int analog_pins[] = {0, 1, 10, 3, 4, 5, 6, 7, 8, 9};
+
 //page / button variables
 byte page = PAGE_DEFAULT;
 byte button_releases[3] = {0, 0, 0};
@@ -171,14 +174,17 @@ void loop() {
 	//read potentiometer values
 	int pot_val = 0;
 	int diff = 0;
-	for(int i = 0; i < 10; i++){
-		pots[i] = analogRead(i);
+	for(int i = 0; i < 12; i++){
+		//pots[i] = analogRead(analog_pins[i]);
+		Serial.print(analogRead(i));
+		Serial.print(' ');
 	}
+	Serial.println(' ');
 	//initialize if needed
 	if(effects_len < 0){
 		//send command to get current modules
-		Serial.print("CUR\n");
-		serial_read_effects();
+		//Serial.print("CUR\n");
+		//serial_read_effects();
 	//edit screen, edit a module
 	}else if(page == PAGE_EDIT){
 		//send the potentiometer values
@@ -195,7 +201,7 @@ void loop() {
 		}
 	//add a new effect to current effects
 	}else if(page == PAGE_ADD){
-		int new_sel = analogRead(0) / (900 / (effects_len));
+		int new_sel = analogRead(analog_pins[0]) / (900 / (effects_len));
 		//switch if effect changes
 		if(new_sel != sel_effect && new_sel < effects_len){
 			sel_effect = new_sel;
@@ -231,7 +237,7 @@ void loop() {
 	//default screen, scroll through current effects
 	}else{
 		if(effects_len > 0){	//if we have effects
-			int new_sel = analogRead(0) / (900 / (effects_len));
+			int new_sel = analogRead(analog_pins[0]) / (900 / (effects_len));
 			//switch if effect changes
 			if(new_sel != sel_effect && new_sel < effects_len){
 				sel_effect = new_sel;
@@ -264,7 +270,7 @@ void loop() {
 			//print button indicator
 			lcd.setCursor(0,1);
 			lcd.print("(+)             ");
-			delay(20);		//to not overload the screen refreshing
+			delay(100);		//to not overload the screen refreshing
 		}
 		if(buttonPressed(BUTTON_LEFT)){
 			page = PAGE_ADD;
