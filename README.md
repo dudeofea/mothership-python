@@ -18,3 +18,13 @@ Progress
 I'm currently writing the controller UI first so I can box that up and not have to worry about it, I'll get to the jackd server in a bit. The latency should be alright, if not numpy'll do the trick or worst yet...Cython!
 
 Right now, about 90% of a fully working version. It would be nice to have a hardware patcher, but I'd have to build it first.
+
+Setup
+-----
+You'll most likely need Ubuntu as that's what I always use.
+
+Installing prerequisites:
+
+`sudo apt-get install libffi-dev`
+
+`pip install bitarray JACK-Client`
