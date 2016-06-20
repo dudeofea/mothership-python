@@ -18,3 +18,19 @@ Progress
 I'm currently writing the controller UI first so I can box that up and not have to worry about it, I'll get to the jackd server in a bit. The latency should be alright, if not numpy'll do the trick or worst yet...Cython!
 
 Right now, about 90% of a fully working version. It would be nice to have a hardware patcher, but I'd have to build it first.
+
+Setup
+-----
+You'll most likely need Ubuntu as that's what I always use.
+
+Installing prerequisites:
+
+`sudo apt-get install libffi-dev`
+
+`pip install bitarray JACK-Client`
+
+Be sure to select the "realtime" option when jackd is installed, if not reinstall/reconfigure it to be so. It'll save you lots of trouble in the future. Also don't forget to use
+
+`sudo usermod -a -G audio <USER_NAME>` to add yourself to the audio group
+
+`sudo usermod -a -G dialout <USER_NAME>` to add yourself to the serial port group (for talking to arduino)
