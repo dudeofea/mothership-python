@@ -29,8 +29,8 @@ Installing prerequisites:
 
 `pip install bitarray JACK-Client`
 
-You'll also have to modify some permissions to use jackd with your user account. Most likely:
+Be sure to select the "realtime" option when jackd is installed, if not reinstall/reconfigure it to be so. It'll save you lots of trouble in the future. Also don't forget to use
 
 `sudo usermod -a -G audio <USER_NAME>` to add yourself to the audio group
 
-as well as following [this](http://jackaudio.org/faq/linux_rt_config.html) guide to setting audio security limits (for realtime)
+`sudo usermod -a -G dialout <USER_NAME>` to add yourself to the serial port group (for talking to arduino)
