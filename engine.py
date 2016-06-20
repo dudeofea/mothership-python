@@ -30,6 +30,8 @@ class AudioEngine(object):
 	patches = []			#patches between effects
 	running = True
 	jack_client = None
+	jack_input = None
+	jack_output = None
 	JACK_GLOBAL = (-1, 0)	#global input / output port
 	audio_thread = None
 	sample_rate = 0
@@ -66,20 +68,24 @@ class AudioEngine(object):
 	def activate(self, new_thread=True):
 		# --- start the jack client and get relevant info
 		self.jack_client = jack.Client('qtjackctl')
-		self.jack_client.activate()	# start the client
 		# register and connect to i/o ports
-		self.jack_client.register_port('in', jack.IsInput)
-		self.jack_client.register_port('out', jack.IsOutput)
-		out_port_name = self.jack_client.get_client_name() + ':out'		# build string for output port
-		for system_playback_port_number in (1, 2):
-			self.jack_client.connect(out_port_name, "system:playback_{}".format(system_playback_port_number))
+		self.jack_input =  self.jack_client.inports.register("input_0")
+		self.jack_output = self.jack_client.outports.register("output_0")
 		# get info
-		self.sample_rate = self.jack_client.get_sample_rate()
-		self.buffer_size = self.jack_client.get_buffer_size()
-		if(new_thread):
-			#start the audio thread
-			self.audio_thread = Thread(target = self.audio_thread_fn)
-			self.audio_thread.start()
+		self.sample_rate = self.jack_client.samplerate
+		self.buffer_size = self.jack_client.blocksize
+		# setup the main process function
+		self.jack_client.set_process_callback(self.process)
+		# start the client
+		self.jack_client.activate()
+	#process input frames and output the output frames
+	def process(self, frames):
+		self.input_buffer = self.jack_input.get_buffer()
+		self.output_buffer= self.jack_output.get_buffer()
+		start = time.time()
+		self.run()
+		end = time.time()
+		self.running_time = end - start
 	def deactivate(self):
 		#stop the audio thread
 		self.running = False
@@ -124,36 +130,6 @@ class AudioEngine(object):
 	def del_patch(self, ind):
 		if ind >= 0 and ind < len(self.patches):
 			del self.patches[ind]
-	#continually call run and process the i/o to the audio buffers
-	def audio_thread_fn(self):
-		#print "Starting audio...."
-		try:
-			self.input_buffer = numpy.zeros((1,self.buffer_size), 'f')
-			self.output_buffer = numpy.zeros((1,self.buffer_size), 'f')
-			while self.running:
-				start = time.time()
-				self.run()
-				end = time.time()
-				self.running_time = end - start
-				try:
-					self.jack_client.process(self.output_buffer, self.input_buffer)
-					time.sleep(0.001)
-				except jack.InputSyncError:
-					print "Too Much CPU Load"
-					self.running = False
-				except jack.OutputSyncError as err:
-					print "Output out of sync: ", err
-					print datetime.datetime.now()
-					self.jack_client.deactivate()
-					self.activate(False)	#restart the jack client
-		except IndexError as err:
-			#go through effects to see if one is missing a buffer
-			for e in self.effects:
-				if len(e.outs) == 0:
-					print 'Effect "'+e.__name__+'" doesn\'t have an output_buffer'
-					traceback.print_exc()
-					return
-		#print "Done audio"
 	#run all effects, in any order, once and return the output buffer
 	def run(self):
 		#run all effects at once, just once
