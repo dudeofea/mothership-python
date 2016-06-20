@@ -28,3 +28,9 @@ Installing prerequisites:
 `sudo apt-get install libffi-dev`
 
 `pip install bitarray JACK-Client`
+
+You'll also have to modify some permissions to use jackd with your user account. Most likely:
+
+`sudo usermod -a -G audio <USER_NAME>` to add yourself to the audio group
+
+as well as following [this](http://jackaudio.org/faq/linux_rt_config.html) guide to setting audio security limits (for realtime)
